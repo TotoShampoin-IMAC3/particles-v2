@@ -1,29 +1,32 @@
 const std = @import("std");
 const zgl = @import("zgl");
-const glfw = @import("glfw");
+const zglfw = @import("zglfw");
 
-fn getProcAddressWrapper(comptime _: type, symbolName: [:0]const u8) ?*const anyopaque {
-    return glfw.getProcAddress(symbolName);
+fn getProcAddressWrapper(
+    comptime _: type,
+    symbolName: [:0]const u8,
+) ?*const anyopaque {
+    return zglfw.getProcAddress(symbolName);
 }
 
 pub fn main() !void {
-    try glfw.init();
-    defer glfw.terminate();
+    try zglfw.init();
+    defer zglfw.terminate();
 
-    const window = try glfw.createWindow(800, 600, "Hello, World!", null, null);
-    defer glfw.destroyWindow(window);
+    const window = try zglfw.createWindow(800, 600, "Hello, World!", null, null);
+    defer zglfw.destroyWindow(window);
 
-    glfw.makeContextCurrent(window);
+    zglfw.makeContextCurrent(window);
 
     try zgl.loadExtensions(void, getProcAddressWrapper);
 
-    while (glfw.windowShouldClose(window) == false) {
+    while (zglfw.windowShouldClose(window) == false) {
         zgl.clear(.{
             .color = true,
             .depth = true,
         });
 
-        glfw.pollEvents();
-        glfw.swapBuffers(window);
+        zglfw.pollEvents();
+        zglfw.swapBuffers(window);
     }
 }

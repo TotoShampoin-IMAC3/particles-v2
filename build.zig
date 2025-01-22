@@ -22,7 +22,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    exe.root_module.addImport("glfw", zglfw.module("glfw"));
+    exe.root_module.addImport("zglfw", zglfw.module("glfw"));
 
     const glfw = b.dependency("glfw", .{
         .target = target,
