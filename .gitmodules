@@ -1,0 +1,9 @@
+[submodule "modules/zgl"]
+	path = modules/zgl
+	url = https://github.com/ziglibs/zgl
+[submodule "modules/zglfw"]
+	path = modules/zglfw
+	url = https://github.com/IridescenceTech/zglfw
+[submodule "modules/glfw"]
+	path = modules/glfw
+	url = https://github.com/emidoots/glfw
