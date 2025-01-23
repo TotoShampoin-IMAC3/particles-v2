@@ -6,5 +6,11 @@ out vec4 f_color;
 
 void main()
 {
-    f_color = vec4(v_texcoord, 0.0, 1.0);
+    float dist = length(v_texcoord - 0.5);
+
+    float alpha = smoothstep(0.55, 0.45, dist);
+
+    if (alpha < 0.5)
+        discard;
+    f_color = vec4(alpha);
 }

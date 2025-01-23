@@ -4,110 +4,65 @@ const zgl = @import("zgl");
 const zlm = @import("zlm");
 
 const init = @import("init.zig");
-const helper = @import("helper.zig");
+const shader = @import("shader.zig");
 const shapes = @import("shapes.zig");
-
-const data = [_]helper.Vertex{
-    .{ .position = .{ -0.5, 0.5, 0.0 }, .texcoord = .{ 0.0, 1.0 } },
-    .{ .position = .{ 0.5, 0.5, 0.0 }, .texcoord = .{ 1.0, 1.0 } },
-    .{ .position = .{ -0.5, -0.5, 0.0 }, .texcoord = .{ 0.0, 0.0 } },
-    .{ .position = .{ 0.5, -0.5, 0.0 }, .texcoord = .{ 1.0, 0.0 } },
-};
-const indices = [_]u32{ 0, 2, 1, 2, 3, 1 };
-const instances = [_]helper.Particle{
-    .{ .position = .{ 0.0, 0.0, 0.0, 1.0 }, .speed = [_]f32{0.0} ** 4 },
-    .{ .position = .{ 1.0, 1.0, 1.0, 1.0 }, .speed = [_]f32{0.0} ** 4 },
-    .{ .position = .{ -1.0, -1.0, 2.0, 1.0 }, .speed = [_]f32{0.0} ** 4 },
-    .{ .position = .{ -1.0, 1.0, 3.0, 1.0 }, .speed = [_]f32{0.0} ** 4 },
-};
+const particle = @import("particle.zig");
 
 pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer {
-        if (gpa.deinit() == .leak)
-            std.debug.print("Memory leak detected!\n", .{});
-    }
-    init.allocator = gpa.allocator();
+    try init.init();
+    defer init.deinit();
 
-    try glfw.init();
-    defer glfw.terminate();
+    const particle_mesh = init.particle_mesh;
+    const particle_program = init.particle_program;
+    const particle_compute = init.particle_compute;
 
-    const window = try glfw.createWindow(800, 600, "Hello, World!", null, null);
-    defer glfw.destroyWindow(window);
-    glfw.makeContextCurrent(window);
-    try init.loadGl();
+    zgl.Program.use(particle_program);
+    const particle_view =
+        particle_program.uniformLocation("u_view");
+    const particle_projection =
+        particle_program.uniformLocation("u_projection");
 
-    var cube_mesh = helper.Mesh.create();
-    defer cube_mesh.delete();
-    shapes.setupAndFillCube(&cube_mesh);
+    zgl.Program.use(particle_compute);
+    const particle_compute_delta_time =
+        particle_compute.uniformLocation("u_delta_time");
 
-    var particle_mesh = helper.InstancedMesh.create();
-    defer particle_mesh.delete();
-    helper.setupAndFillParticle(&particle_mesh, data[0..], indices[0..], instances[0..]);
+    // ===== CAMERA =====
 
-    try init.initShaders();
-    defer init.deinitShaders();
-
-    zgl.Program.use(init.mesh_program);
-    const mesh_model = init.mesh_program.uniformLocation("u_model");
-    const mesh_view = init.mesh_program.uniformLocation("u_view");
-    const mesh_projection = init.mesh_program.uniformLocation("u_projection");
-
-    zgl.Program.use(init.particle_program);
-    const particle_view = init.particle_program.uniformLocation("u_view");
-    const particle_projection = init.particle_program.uniformLocation("u_projection");
-
-    zgl.Program.use(init.particle_compute);
-    const particle_compute_delta_time = init.particle_compute.uniformLocation("u_delta_time");
-
-    const view_matrix = zlm.Mat4.createLookAt(zlm.Vec3.unitZ.scale(-5), zlm.Vec3.zero, zlm.Vec3.unitY);
-    const perspective_zlm = zlm.Mat4.createPerspective(std.math.rad_per_deg * 45, 800.0 / 600.0, 0.1, 100.0);
+    const view_matrix = zlm.Mat4
+        .createLookAt(zlm.Vec3.unitZ.scale(-5), zlm.Vec3.zero, zlm.Vec3.unitY);
+    const perspective_zlm = zlm.Mat4
+        .createPerspective(std.math.rad_per_deg * 45, 800.0 / 600.0, 0.1, 100.0);
 
     zgl.enable(.depth_test);
 
+    // ===== MAIN LOOP =====
+
     const start = glfw.getTime();
-    while (glfw.windowShouldClose(window) == false) {
+    while (glfw.windowShouldClose(init.window) == false) {
         const now = glfw.getTime();
         const delta = now - start;
 
-        const cube_model =
-            zlm.Mat4.createAngleAxis(zlm.Vec3.one, @floatCast(now))
-            .mul(zlm.Mat4.createTranslation(zlm.vec3(3, 0, 5)));
+        zgl.Program.use(particle_compute);
+        particle_compute.uniform1f(particle_compute_delta_time, @floatCast(delta));
 
-        zgl.Program.use(init.mesh_program);
-        init.mesh_program.uniformMatrix4(mesh_model, false, &.{cube_model.fields});
-        init.mesh_program.uniformMatrix4(mesh_view, false, &.{view_matrix.fields});
-        init.mesh_program.uniformMatrix4(mesh_projection, false, &.{perspective_zlm.fields});
-        zgl.Program.use(init.particle_program);
-        init.particle_program.uniformMatrix4(particle_view, false, &.{view_matrix.fields});
-        init.particle_program.uniformMatrix4(particle_projection, false, &.{perspective_zlm.fields});
-        zgl.Program.use(init.particle_compute);
-        init.particle_compute.uniform1f(particle_compute_delta_time, @floatCast(delta));
+        zgl.Program.use(particle_program);
+        particle_program.uniformMatrix4(particle_view, false, &.{view_matrix.fields});
+        particle_program.uniformMatrix4(particle_projection, false, &.{perspective_zlm.fields});
 
-        zgl.clear(.{
-            .color = true,
-            .depth = true,
-        });
+        zgl.clear(.{ .color = true, .depth = true });
 
-        zgl.Program.use(init.particle_compute);
+        zgl.Program.use(particle_compute);
         zgl.bindBufferBase(.shader_storage_buffer, 0, particle_mesh.instance);
         zgl.binding.dispatchCompute(@intCast(particle_mesh.instance_count), 1, 1);
         zgl.binding.memoryBarrier(zgl.binding.SHADER_STORAGE_BARRIER_BIT);
 
-        zgl.enable(.cull_face);
-        zgl.cullFace(.front);
-
-        zgl.Program.use(init.mesh_program);
-        zgl.VertexArray.bind(cube_mesh.vao);
-        zgl.drawElements(.triangles, cube_mesh.count, .unsigned_int, 0);
-
         zgl.cullFace(.back);
 
-        zgl.Program.use(init.particle_program);
+        zgl.Program.use(particle_program);
         zgl.VertexArray.bind(particle_mesh.vao);
-        zgl.drawElementsInstanced(.triangles, 6, .unsigned_int, 0, instances.len);
+        zgl.drawElementsInstanced(.triangles, 6, .unsigned_int, 0, particle.initial_array.len);
 
         glfw.pollEvents();
-        glfw.swapBuffers(window);
+        glfw.swapBuffers(init.window);
     }
 }
