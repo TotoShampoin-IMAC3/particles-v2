@@ -21,12 +21,9 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    exe.root_module.addImport("zglfw", zglfw.module("glfw"));
+    exe.root_module.addImport("glfw", zglfw.module("glfw"));
 
-    const zlm = b.dependency("zlm", .{
-        // .target = target,
-        // .optimize = optimize,
-    });
+    const zlm = b.dependency("zlm", .{});
     exe.root_module.addImport("zlm", zlm.module("zlm"));
 
     const glfw = b.dependency("glfw", .{
