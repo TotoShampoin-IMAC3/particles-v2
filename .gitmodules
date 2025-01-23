@@ -7,3 +7,6 @@
 [submodule "modules/glfw"]
 	path = modules/glfw
 	url = https://github.com/emidoots/glfw
+[submodule "modules/zlm"]
+	path = modules/zlm
+	url = https://github.com/ziglibs/zlm

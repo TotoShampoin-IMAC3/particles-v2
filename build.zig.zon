@@ -54,6 +54,7 @@
         .zgl = .{ .path = "modules/zgl" },
         .zglfw = .{ .path = "modules/zglfw" },
         .glfw = .{ .path = "modules/glfw" },
+        .zlm = .{ .path = "modules/zlm" },
     },
 
     // Specifies the set of files and directories that are included in this package.

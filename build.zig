@@ -2,7 +2,6 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
-
     const optimize = b.standardOptimizeOption(.{});
 
     const exe = b.addExecutable(.{
@@ -23,6 +22,12 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     exe.root_module.addImport("zglfw", zglfw.module("glfw"));
+
+    const zlm = b.dependency("zlm", .{
+        // .target = target,
+        // .optimize = optimize,
+    });
+    exe.root_module.addImport("zlm", zlm.module("zlm"));
 
     const glfw = b.dependency("glfw", .{
         .target = target,
