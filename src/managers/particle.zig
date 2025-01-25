@@ -4,7 +4,7 @@ const mesh = @import("mesh.zig");
 const vertex = @import("vertex.zig");
 const shapes = @import("shapes.zig");
 
-const InstancedMesh = mesh.InstancedMesh;
+const InstancedMesh = mesh.Mesh;
 const Vertex = vertex.Vertex;
 
 pub const Particle = struct {
@@ -32,7 +32,7 @@ pub fn setupAndFill(
     setupMesh(_mesh);
 }
 
-pub fn setupMesh(_mesh: *InstancedMesh) void {
+pub fn setupMesh(_mesh: *InstancedMesh, instance: zgl.Buffer) void {
     zgl.VertexArray.bind(_mesh.vao);
 
     zgl.Buffer.bind(_mesh.vbo, .array_buffer);
@@ -41,7 +41,7 @@ pub fn setupMesh(_mesh: *InstancedMesh) void {
     zgl.enableVertexAttribArray(1);
     zgl.vertexAttribPointer(1, 2, .float, false, @sizeOf(Vertex), @offsetOf(Vertex, "texcoord"));
 
-    zgl.Buffer.bind(_mesh.instance, .array_buffer);
+    zgl.Buffer.bind(instance, .array_buffer);
     zgl.enableVertexAttribArray(2);
     zgl.vertexAttribPointer(2, 4, .float, false, @sizeOf(Particle), @offsetOf(Particle, "position"));
     zgl.enableVertexAttribArray(3);
@@ -54,6 +54,10 @@ pub fn setupMesh(_mesh: *InstancedMesh) void {
     zgl.vertexAttribPointer(6, 1, .float, false, @sizeOf(Particle), @offsetOf(Particle, "life"));
 
     zgl.vertexAttribDivisor(2, 1);
+    zgl.vertexAttribDivisor(3, 1);
+    zgl.vertexAttribDivisor(4, 1);
+    zgl.vertexAttribDivisor(5, 1);
+    zgl.vertexAttribDivisor(6, 1);
     zgl.Buffer.bind(.invalid, .array_buffer);
     zgl.Buffer.bind(_mesh.ebo, .element_array_buffer);
 }

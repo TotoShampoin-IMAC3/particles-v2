@@ -47,12 +47,3 @@ pub const quad_vertices = [_]vertex.Vertex{
     .{ .position = .{ 0.5, -0.5, 0.0 }, .texcoord = .{ 1.0, 0.0 } },
 };
 pub const quad_indices = [_]u32{ 0, 2, 1, 2, 3, 1 };
-
-pub fn setupAndFillCube(_mesh: *mesh.Mesh) void {
-    _mesh.importMesh(vertex.Vertex, cube_vertices[0..], cube_indices[0..]);
-    vertex.setupVertexMesh(_mesh);
-}
-pub fn setupAndFillQuad(_mesh: *mesh.Mesh) void {
-    _mesh.importMesh(vertex.Vertex, quad_vertices[0..], quad_indices[0..]);
-    vertex.setupVertexMesh(_mesh);
-}

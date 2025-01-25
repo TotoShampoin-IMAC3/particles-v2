@@ -16,7 +16,7 @@
 Particle init(uint idx)
 {
     Particle particle;
-    particle.position.xyz = vec3(0.0);
+    particle.position = vec4(0.0, 0.0, 0.0, 1.0);
     particle.color = vec4(1.0, .5, .0, 1.0);
     particle.size = 0.25;
     particle.angle = 0.0;
@@ -27,5 +27,5 @@ Particle init(uint idx)
 
 void update(inout Particle particle, inout Particle velocity, uint idx)
 {
-    velocity.position.xyz = vec3(0, 0, 0.01);
+    velocity.position = vec4(0, 0, 0.01, 1);
 }
