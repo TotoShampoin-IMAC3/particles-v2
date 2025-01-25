@@ -15,19 +15,16 @@ pub fn main() !void {
     const particle_mesh = init.particle_mesh;
     const particle_program = init.particle_program;
 
-    const init_compute, const update_compute = block: {
-        const file = try std.fs.cwd().readFileAlloc(init.allocator, "res/test.glsl", 8192);
-        defer init.allocator.free(file);
+    const file = try std.fs.cwd().readFileAlloc(init.allocator, "res/test.glsl", 8192);
+    defer init.allocator.free(file);
 
-        const init_compute = try shader.loadComputeMultiSources(2, .{ @embedFile("shaders/init.comp"), file });
-        const update_compute = try shader.loadComputeMultiSources(2, .{ @embedFile("shaders/update.comp"), file });
+    const init_compute = try shader.loadComputeMultiSources(2, .{ @embedFile("shaders/init.comp"), file });
+    defer zgl.Program.delete(init_compute);
+    const update_compute = try shader.loadComputeMultiSources(2, .{ @embedFile("shaders/update.comp"), file });
+    defer zgl.Program.delete(update_compute);
 
-        break :block .{ init_compute, update_compute };
-    };
-    defer {
-        zgl.Program.delete(init_compute);
-        zgl.Program.delete(update_compute);
-    }
+    const uniforms = try shader.getUniformsFromSource(file);
+    defer shader.Uniform.deleteAll(uniforms);
 
     const particles_count: c_uint = @intCast(particle.initial_array.len);
     const particles_now = particle_mesh.instance;

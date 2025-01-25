@@ -83,3 +83,56 @@ pub fn loadComputeMultiSources(
     }
     return program;
 }
+
+pub const UniformType = enum { int, uint, float, vec2, vec3, vec4 };
+pub const Uniform = struct {
+    name: []const u8,
+    type: UniformType,
+
+    pub fn fromLine(line: []const u8) !?Uniform {
+        const trim0 = std.mem.trim(u8, line, "\r");
+        const trim = std.mem.trim(u8, trim0, ";");
+        var tokens = std.mem.tokenizeSequence(u8, trim, " ");
+        const first = tokens.next() orelse return null;
+        if (!std.mem.eql(u8, first, "uniform")) return null;
+
+        const second = tokens.next() orelse return null;
+        const @"type": UniformType = t: {
+            if (std.mem.eql(u8, second, "int")) break :t UniformType.int;
+            if (std.mem.eql(u8, second, "uint")) break :t UniformType.uint;
+            if (std.mem.eql(u8, second, "float")) break :t UniformType.float;
+            if (std.mem.eql(u8, second, "vec2")) break :t UniformType.vec2;
+            if (std.mem.eql(u8, second, "vec3")) break :t UniformType.vec3;
+            if (std.mem.eql(u8, second, "vec4")) break :t UniformType.vec4;
+            break :t null;
+        } orelse return null;
+
+        const third = tokens.next() orelse return null;
+        const name = try init.allocator.alloc(u8, third.len);
+        std.mem.copyForwards(u8, name, third);
+
+        return Uniform{ .name = name, .type = @"type" };
+    }
+    pub fn delete(self: *Uniform) void {
+        init.allocator.free(self.name);
+    }
+
+    pub fn deleteAll(uniforms: []Uniform) void {
+        for (uniforms) |*uniform| {
+            uniform.delete();
+        }
+        init.allocator.free(uniforms);
+    }
+};
+
+/// Extracts uniform names from a GLSL source.
+pub fn getUniformsFromSource(source: []const u8) ![]Uniform {
+    var lines = std.mem.splitSequence(u8, source, "\n");
+    var uniforms = std.ArrayList(Uniform).init(init.allocator);
+    while (lines.next()) |line| {
+        if (try Uniform.fromLine(line)) |uniform| {
+            try uniforms.append(uniform);
+        }
+    }
+    return try uniforms.toOwnedSlice();
+}

@@ -28,10 +28,10 @@ All in compute shaders
 
 - [x] Render quads
 - [x] Render as particles
-- [ ] Settle on a particle schema
-  - [ ] Implement
-- [ ] Load particle shader at runtime
-  - [ ] Process shader files, to store everything in a single file
+- [x] Settle on a particle schema
+  - [x] Implement
+- [x] Load particle shader at runtime
+  - [x] Process shader files, to store everything in a single file
 - [ ] GUI
   - [ ] frame size and framerate
   - [ ] particle count
