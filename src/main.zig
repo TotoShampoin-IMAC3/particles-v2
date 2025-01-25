@@ -14,17 +14,30 @@ pub fn main() !void {
 
     const particle_mesh = init.particle_mesh;
     const particle_program = init.particle_program;
-    const particle_compute = init.particle_compute;
 
-    zgl.Program.use(particle_program);
-    const particle_view =
-        particle_program.uniformLocation("u_view");
-    const particle_projection =
-        particle_program.uniformLocation("u_projection");
+    const init_compute, const update_compute = block: {
+        const file = try std.fs.cwd().readFileAlloc(init.allocator, "res/test.glsl", 8192);
+        defer init.allocator.free(file);
 
-    zgl.Program.use(particle_compute);
-    const particle_compute_delta_time =
-        particle_compute.uniformLocation("u_delta_time");
+        const init_compute = try shader.loadComputeMultiSources(2, .{ @embedFile("shaders/init.comp"), file });
+        const update_compute = try shader.loadComputeMultiSources(2, .{ @embedFile("shaders/update.comp"), file });
+
+        break :block .{ init_compute, update_compute };
+    };
+    defer {
+        zgl.Program.delete(init_compute);
+        zgl.Program.delete(update_compute);
+    }
+
+    const particles_count: c_uint = @intCast(particle.initial_array.len);
+    const particles_now = particle_mesh.instance;
+    const particles_init = init.particles_init_array;
+    const particles_velocity = init.particles_velocity_array;
+
+    const particle_view = particle_program.uniformLocation("u_view");
+    const particle_projection = particle_program.uniformLocation("u_projection");
+
+    const particle_compute_delta_time = update_compute.uniformLocation("u_delta_time");
 
     // ===== CAMERA =====
 
@@ -35,6 +48,13 @@ pub fn main() !void {
 
     zgl.enable(.depth_test);
 
+    zgl.Program.use(init_compute);
+    zgl.bindBufferBase(.shader_storage_buffer, 0, particles_now);
+    zgl.bindBufferBase(.shader_storage_buffer, 1, particles_init);
+    zgl.bindBufferBase(.shader_storage_buffer, 2, particles_velocity);
+    zgl.binding.dispatchCompute(particles_count, 1, 1);
+    zgl.binding.memoryBarrier(zgl.binding.SHADER_STORAGE_BARRIER_BIT);
+
     // ===== MAIN LOOP =====
 
     const start = glfw.getTime();
@@ -42,8 +62,8 @@ pub fn main() !void {
         const now = glfw.getTime();
         const delta = now - start;
 
-        zgl.Program.use(particle_compute);
-        particle_compute.uniform1f(particle_compute_delta_time, @floatCast(delta));
+        zgl.Program.use(update_compute);
+        update_compute.uniform1f(particle_compute_delta_time, @floatCast(delta));
 
         zgl.Program.use(particle_program);
         particle_program.uniformMatrix4(particle_view, false, &.{view_matrix.fields});
@@ -51,9 +71,11 @@ pub fn main() !void {
 
         zgl.clear(.{ .color = true, .depth = true });
 
-        zgl.Program.use(particle_compute);
-        zgl.bindBufferBase(.shader_storage_buffer, 0, particle_mesh.instance);
-        zgl.binding.dispatchCompute(@intCast(particle_mesh.instance_count), 1, 1);
+        zgl.Program.use(update_compute);
+        zgl.bindBufferBase(.shader_storage_buffer, 0, particles_now);
+        zgl.bindBufferBase(.shader_storage_buffer, 1, particles_init);
+        zgl.bindBufferBase(.shader_storage_buffer, 2, particles_velocity);
+        zgl.binding.dispatchCompute(particles_count, 1, 1);
         zgl.binding.memoryBarrier(zgl.binding.SHADER_STORAGE_BARRIER_BIT);
 
         zgl.cullFace(.back);

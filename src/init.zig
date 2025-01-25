@@ -13,9 +13,14 @@ pub var window: *glfw.Window = undefined;
 
 pub var mesh_program: zgl.Program = undefined;
 pub var particle_program: zgl.Program = undefined;
-pub var particle_compute: zgl.Program = undefined;
+
+// pub var init_compute: zgl.Program = undefined;
+// pub var update_compute: zgl.Program = undefined;
 
 pub var particle_mesh: mesh.InstancedMesh = undefined;
+
+pub var particles_init_array: zgl.Buffer = undefined;
+pub var particles_velocity_array: zgl.Buffer = undefined;
 
 pub fn init() !void {
     gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -60,19 +65,30 @@ pub fn initShaders() !void {
         @embedFile("shaders/particle.frag"),
     );
 
-    particle_compute = try shader.loadCompute(
-        @embedFile("shaders/particle.comp"),
-    );
+    // init_compute = try shader.loadCompute(
+    //     @embedFile("shaders/init.comp"),
+    // );
+
+    // update_compute = try shader.loadCompute(
+    //     @embedFile("shaders/update.comp"),
+    // );
 }
 pub fn deinitShaders() void {
     zgl.Program.delete(mesh_program);
     zgl.Program.delete(particle_program);
-    zgl.Program.delete(particle_compute);
+    // zgl.Program.delete(init_compute);
+    // zgl.Program.delete(update_compute);
 }
 
 pub fn initMesh() !void {
     particle_mesh = mesh.InstancedMesh.create();
     particle.setupAndFill(&particle_mesh, particle.initial_array[0..]);
+    particles_init_array = zgl.Buffer.create();
+    particles_velocity_array = zgl.Buffer.create();
+    zgl.Buffer.bind(particles_init_array, .shader_storage_buffer);
+    zgl.Buffer.data(particles_init_array, particle.Particle, particle.initial_array[0..], .dynamic_draw);
+    zgl.Buffer.bind(particles_velocity_array, .shader_storage_buffer);
+    zgl.namedBufferUninitialized(particles_velocity_array, particle.Particle, particle.initial_array.len, .dynamic_draw);
 }
 pub fn deinitMesh() void {
     particle_mesh.delete();

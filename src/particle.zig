@@ -9,9 +9,11 @@ const Vertex = vertex.Vertex;
 
 pub const Particle = struct {
     position: [4]f32,
-    speed: [4]f32 = [_]f32{0.0} ** 4,
+    color: [4]f32 = [_]f32{0.0} ** 4,
     size: f32 = 1.0,
-    _padding: [3]f32 = [_]f32{0.0} ** 3,
+    angle: f32 = 0.0,
+    life: f32 = 1.0,
+    _padding: [1]f32 = [_]f32{0.0} ** 1,
 };
 
 pub const initial_array = [_]Particle{
@@ -43,9 +45,13 @@ pub fn setupMesh(_mesh: *InstancedMesh) void {
     zgl.enableVertexAttribArray(2);
     zgl.vertexAttribPointer(2, 4, .float, false, @sizeOf(Particle), @offsetOf(Particle, "position"));
     zgl.enableVertexAttribArray(3);
-    zgl.vertexAttribPointer(3, 4, .float, false, @sizeOf(Particle), @offsetOf(Particle, "speed"));
+    zgl.vertexAttribPointer(3, 4, .float, false, @sizeOf(Particle), @offsetOf(Particle, "color"));
     zgl.enableVertexAttribArray(4);
     zgl.vertexAttribPointer(4, 1, .float, false, @sizeOf(Particle), @offsetOf(Particle, "size"));
+    zgl.enableVertexAttribArray(5);
+    zgl.vertexAttribPointer(5, 1, .float, false, @sizeOf(Particle), @offsetOf(Particle, "angle"));
+    zgl.enableVertexAttribArray(6);
+    zgl.vertexAttribPointer(6, 1, .float, false, @sizeOf(Particle), @offsetOf(Particle, "life"));
 
     zgl.vertexAttribDivisor(2, 1);
     zgl.Buffer.bind(.invalid, .array_buffer);

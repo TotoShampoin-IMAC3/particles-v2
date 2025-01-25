@@ -1,0 +1,42 @@
+#version 430 core
+
+struct Particle
+{
+    vec4 position;
+    vec4 color;
+    float size;
+    float angle;
+    float life;
+};
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, binding = 0) buffer ParticleBuffer
+{
+    Particle particles[];
+};
+
+layout(std430, binding = 1) buffer InitBuffer
+{
+    Particle particles_init[];
+};
+
+layout(std430, binding = 2) buffer VelocityBuffer
+{
+    Particle particles_velocity[];
+};
+
+uniform float u_delta_time;
+
+void update(inout Particle particle, inout Particle velocity, uint idx);
+
+void main()
+{
+    uint idx = gl_GlobalInvocationID.x;
+    update(particles[idx], particles_velocity[idx], idx);
+    particles[idx].position += particles_velocity[idx].position * u_delta_time;
+    particles[idx].color += particles_velocity[idx].color * u_delta_time;
+    particles[idx].size += particles_velocity[idx].size * u_delta_time;
+    particles[idx].angle += particles_velocity[idx].angle * u_delta_time;
+    particles[idx].life += particles_velocity[idx].life * u_delta_time;
+}
