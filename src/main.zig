@@ -4,19 +4,17 @@ const zgl = @import("zgl");
 const zlm = @import("zlm");
 
 const init = @import("init.zig");
-const shader = @import("shader.zig");
-const shapes = @import("shapes.zig");
-const particle = @import("particle.zig");
+const alloc = @import("managers/allocator.zig");
+const shader = @import("managers/shader.zig");
+const shapes = @import("managers/shapes.zig");
+const particle = @import("managers/particle.zig");
 
 pub fn main() !void {
     try init.init();
     defer init.deinit();
 
-    const particle_mesh = init.particle_mesh;
-    const particle_program = init.particle_program;
-
-    const file = try std.fs.cwd().readFileAlloc(init.allocator, "res/test.glsl", 8192);
-    defer init.allocator.free(file);
+    const file = try std.fs.cwd().readFileAlloc(alloc.allocator, "res/test.glsl", 8192);
+    defer alloc.allocator.free(file);
 
     const init_compute = try shader.loadComputeMultiSources(2, .{ @embedFile("shaders/init.comp"), file });
     defer zgl.Program.delete(init_compute);
@@ -26,7 +24,10 @@ pub fn main() !void {
     const uniforms = try shader.getUniformsFromSource(file);
     defer shader.Uniform.deleteAll(uniforms);
 
-    const particles_count: c_uint = @intCast(particle.initial_array.len);
+    const particle_mesh = init.particle_mesh;
+    const particle_program = init.particle_program;
+
+    const particles_count = particle.initial_array.len;
     const particles_now = particle_mesh.instance;
     const particles_init = init.particles_init_array;
     const particles_velocity = init.particles_velocity_array;
@@ -66,8 +67,6 @@ pub fn main() !void {
         particle_program.uniformMatrix4(particle_view, false, &.{view_matrix.fields});
         particle_program.uniformMatrix4(particle_projection, false, &.{perspective_zlm.fields});
 
-        zgl.clear(.{ .color = true, .depth = true });
-
         zgl.Program.use(update_compute);
         zgl.bindBufferBase(.shader_storage_buffer, 0, particles_now);
         zgl.bindBufferBase(.shader_storage_buffer, 1, particles_init);
@@ -75,7 +74,7 @@ pub fn main() !void {
         zgl.binding.dispatchCompute(particles_count, 1, 1);
         zgl.binding.memoryBarrier(zgl.binding.SHADER_STORAGE_BARRIER_BIT);
 
-        zgl.cullFace(.back);
+        zgl.clear(.{ .color = true, .depth = true });
 
         zgl.Program.use(particle_program);
         zgl.VertexArray.bind(particle_mesh.vao);

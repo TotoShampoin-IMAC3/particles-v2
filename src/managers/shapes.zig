@@ -2,7 +2,7 @@ const std = @import("std");
 const zgl = @import("zgl");
 
 const mesh = @import("mesh.zig");
-const init = @import("init.zig");
+const alloc = @import("allocator.zig");
 const vertex = @import("vertex.zig");
 
 pub const cube_vertices = [_]vertex.Vertex{

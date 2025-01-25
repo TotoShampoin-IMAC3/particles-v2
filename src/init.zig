@@ -2,13 +2,14 @@ const std = @import("std");
 const glfw = @import("glfw");
 const zgl = @import("zgl");
 
-const shader = @import("shader.zig");
-const mesh = @import("mesh.zig");
-const vertex = @import("vertex.zig");
-const particle = @import("particle.zig");
+const alloc = @import("managers/allocator.zig");
+const shader = @import("managers/shader.zig");
+const mesh = @import("managers/mesh.zig");
+const vertex = @import("managers/vertex.zig");
+const particle = @import("managers/particle.zig");
 
-pub var gpa: std.heap.GeneralPurposeAllocator(.{}) = undefined;
-pub var allocator: std.mem.Allocator = undefined;
+// pub var gpa: std.heap.GeneralPurposeAllocator(.{}) = undefined;
+// pub var allocator: std.mem.Allocator = undefined;
 pub var window: *glfw.Window = undefined;
 
 pub var mesh_program: zgl.Program = undefined;
@@ -23,8 +24,9 @@ pub var particles_init_array: zgl.Buffer = undefined;
 pub var particles_velocity_array: zgl.Buffer = undefined;
 
 pub fn init() !void {
-    gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    allocator = gpa.allocator();
+    // gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    // allocator = gpa.allocator();
+    try alloc.init();
 
     try glfw.init();
 
@@ -39,8 +41,9 @@ pub fn deinit() void {
     deinitShaders();
     glfw.destroyWindow(window);
     glfw.terminate();
-    if (gpa.deinit() == .leak)
-        std.debug.print("Memory leak detected!\n", .{});
+    alloc.deinit();
+    // if (gpa.deinit() == .leak)
+    //     std.debug.print("Memory leak detected!\n", .{});
 }
 
 pub fn getProcAddressWrapper(

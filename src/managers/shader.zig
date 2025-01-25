@@ -1,14 +1,14 @@
 const std = @import("std");
 const zgl = @import("zgl");
-const init = @import("init.zig");
+const alloc = @import("allocator.zig");
 
 pub fn loadShader(shaderType: zgl.ShaderType, source: []const u8) !zgl.Shader {
     const shader = zgl.Shader.create(shaderType);
     zgl.Shader.source(shader, 1, &.{source});
     zgl.Shader.compile(shader);
     if (zgl.Shader.get(shader, .compile_status) == 0) {
-        const log = try zgl.Shader.getCompileLog(shader, init.allocator);
-        defer init.allocator.free(log);
+        const log = try zgl.Shader.getCompileLog(shader, alloc.allocator);
+        defer alloc.allocator.free(log);
         std.debug.print("Shader compilation failed: {s}\n", .{log});
         return error.ShaderCompilationFailed;
     }
@@ -23,8 +23,8 @@ pub fn loadShaderMultiSources(
     zgl.Shader.source(shader, 2, sources[0..]);
     zgl.Shader.compile(shader);
     if (zgl.Shader.get(shader, .compile_status) == 0) {
-        const log = try zgl.Shader.getCompileLog(shader, init.allocator);
-        defer init.allocator.free(log);
+        const log = try zgl.Shader.getCompileLog(shader, alloc.allocator);
+        defer alloc.allocator.free(log);
         std.debug.print("Shader compilation failed: {s}\n", .{log});
         return error.ShaderCompilationFailed;
     }
@@ -44,8 +44,8 @@ pub fn loadShaders(
     zgl.Program.attach(program, _fragment);
     zgl.Program.link(program);
     if (zgl.Program.get(program, .link_status) == 0) {
-        const log = try zgl.Program.getCompileLog(program, init.allocator);
-        defer init.allocator.free(log);
+        const log = try zgl.Program.getCompileLog(program, alloc.allocator);
+        defer alloc.allocator.free(log);
         std.debug.print("Program linking failed: {s}\n", .{log});
         return error.ProgramLinkingFailed;
     }
@@ -58,8 +58,8 @@ pub fn loadCompute(computeSource: []const u8) !zgl.Program {
     zgl.Program.attach(program, compute);
     zgl.Program.link(program);
     if (zgl.Program.get(program, .link_status) == 0) {
-        const log = try zgl.Program.getCompileLog(program, init.allocator);
-        defer init.allocator.free(log);
+        const log = try zgl.Program.getCompileLog(program, alloc.allocator);
+        defer alloc.allocator.free(log);
         std.debug.print("Program linking failed: {s}\n", .{log});
         return error.ProgramLinkingFailed;
     }
@@ -76,8 +76,8 @@ pub fn loadComputeMultiSources(
     zgl.Program.attach(program, compute);
     zgl.Program.link(program);
     if (zgl.Program.get(program, .link_status) == 0) {
-        const log = try zgl.Program.getCompileLog(program, init.allocator);
-        defer init.allocator.free(log);
+        const log = try zgl.Program.getCompileLog(program, alloc.allocator);
+        defer alloc.allocator.free(log);
         std.debug.print("Program linking failed: {s}\n", .{log});
         return error.ProgramLinkingFailed;
     }
@@ -108,27 +108,27 @@ pub const Uniform = struct {
         } orelse return null;
 
         const third = tokens.next() orelse return null;
-        const name = try init.allocator.alloc(u8, third.len);
+        const name = try alloc.allocator.alloc(u8, third.len);
         std.mem.copyForwards(u8, name, third);
 
         return Uniform{ .name = name, .type = @"type" };
     }
     pub fn delete(self: *Uniform) void {
-        init.allocator.free(self.name);
+        alloc.allocator.free(self.name);
     }
 
     pub fn deleteAll(uniforms: []Uniform) void {
         for (uniforms) |*uniform| {
             uniform.delete();
         }
-        init.allocator.free(uniforms);
+        alloc.allocator.free(uniforms);
     }
 };
 
 /// Extracts uniform names from a GLSL source.
 pub fn getUniformsFromSource(source: []const u8) ![]Uniform {
     var lines = std.mem.splitSequence(u8, source, "\n");
-    var uniforms = std.ArrayList(Uniform).init(init.allocator);
+    var uniforms = std.ArrayList(Uniform).init(alloc.allocator);
     while (lines.next()) |line| {
         if (try Uniform.fromLine(line)) |uniform| {
             try uniforms.append(uniform);
