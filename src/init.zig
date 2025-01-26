@@ -13,6 +13,7 @@ pub fn init() !void {
     try glfw.init();
     window = try glfw.createWindow(800, 600, "Hello, World!", null, null);
     glfw.makeContextCurrent(window);
+    glfw.swapInterval(1);
     try loadGl();
     try particle.init();
     imgui.initContext();

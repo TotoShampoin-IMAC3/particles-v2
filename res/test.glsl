@@ -11,21 +11,24 @@
 // - Particle particles[]
 // - Particle particles_init[]
 // - Particle particles_velocity[]
+// - Particle particles_init_velocity[]
 // - float u_delta_time
 
-Particle init(uint idx)
+void init(inout Particle particle, inout Particle velocity, uint idx)
 {
-    Particle particle;
     particle.position = vec4(0.0, 0.0, 0.0, 1.0);
     particle.color = vec4(1.0, .5, .0, 1.0);
     particle.size = 0.25;
     particle.angle = 0.0;
     particle.life = 1.0;
 
-    return particle;
+    velocity.position = vec4(0.0, -1.0, 0.0, 0.0);
+    velocity.color = vec4(0.0, 0.0, 0.0, 0.0);
+    velocity.size = 0.0;
+    velocity.angle = 0.0;
+    velocity.life = 0.0;
 }
 
 void update(inout Particle particle, inout Particle velocity, uint idx)
 {
-    velocity.position = vec4(0, 0, 0.01, 1);
 }

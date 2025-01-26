@@ -26,11 +26,17 @@ layout(std430, binding = 2) buffer VelocityBuffer
     Particle particles_velocity[];
 };
 
-Particle init(uint idx);
+layout(std430, binding = 3) buffer InitVelocityBuffer
+{
+    Particle particles_init_velocity[];
+};
+
+void init(inout Particle init, inout Particle init_velocity, uint idx);
 
 void main()
 {
     uint idx = gl_GlobalInvocationID.x;
-    particles_init[idx] = init(idx);
+    init(particles_init[idx], particles_init_velocity[idx], idx);
     particles[idx] = particles_init[idx];
+    particles_velocity[idx] = particles_init_velocity[idx];
 }

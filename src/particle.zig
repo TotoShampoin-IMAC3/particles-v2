@@ -30,6 +30,7 @@ pub var count: usize = 2;
 pub var init_buffer: zgl.Buffer = undefined;
 pub var now_buffer: zgl.Buffer = undefined;
 pub var velocity_buffer: zgl.Buffer = undefined;
+pub var init_velocity_buffer: zgl.Buffer = undefined;
 
 pub fn init() !void {
     render_program = try _shader.loadShaders(
@@ -41,6 +42,7 @@ pub fn init() !void {
     init_buffer = zgl.Buffer.create();
     now_buffer = zgl.Buffer.create();
     velocity_buffer = zgl.Buffer.create();
+    init_velocity_buffer = zgl.Buffer.create();
 
     zgl.Buffer.bind(init_buffer, .shader_storage_buffer);
     zgl.namedBufferUninitialized(init_buffer, Particle, count, .dynamic_draw);
@@ -48,6 +50,8 @@ pub fn init() !void {
     zgl.namedBufferUninitialized(now_buffer, Particle, count, .dynamic_draw);
     zgl.Buffer.bind(velocity_buffer, .shader_storage_buffer);
     zgl.namedBufferUninitialized(velocity_buffer, Particle, count, .dynamic_draw);
+    zgl.Buffer.bind(init_velocity_buffer, .shader_storage_buffer);
+    zgl.namedBufferUninitialized(init_velocity_buffer, Particle, count, .dynamic_draw);
 
     mesh.importMesh(_vertex.Vertex, _shapes.quad_vertices[0..], _shapes.quad_indices[0..]);
 
@@ -57,7 +61,9 @@ pub fn deinit() void {
     zgl.Program.delete(render_program);
     _mesh.Mesh.delete(&mesh);
     zgl.Buffer.delete(init_buffer);
+    zgl.Buffer.delete(now_buffer);
     zgl.Buffer.delete(velocity_buffer);
+    zgl.Buffer.delete(init_velocity_buffer);
 }
 
 pub fn loadProgram(path: []const u8) !void {
@@ -91,6 +97,7 @@ pub fn runProgram(program: zgl.Program) void {
     zgl.bindBufferBase(.shader_storage_buffer, 0, now_buffer);
     zgl.bindBufferBase(.shader_storage_buffer, 1, init_buffer);
     zgl.bindBufferBase(.shader_storage_buffer, 2, velocity_buffer);
+    zgl.bindBufferBase(.shader_storage_buffer, 3, init_velocity_buffer);
     zgl.binding.dispatchCompute(@intCast(count), 1, 1);
     zgl.binding.memoryBarrier(zgl.binding.SHADER_STORAGE_BARRIER_BIT);
 }

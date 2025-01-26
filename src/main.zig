@@ -43,9 +43,11 @@ pub fn main() !void {
     // ===== MAIN LOOP =====
 
     const start = glfw.getTime();
+    var last = start;
     while (glfw.windowShouldClose(init.window) == false) {
         const now = glfw.getTime();
-        const delta = now - start;
+        // const elapsed = now - start;
+        const delta = now - last;
 
         zgl.Program.use(particle.update_program.?);
         particle.update_program.?.uniform1f(particle.uniform_delta_time.?, @floatCast(delta));
@@ -64,6 +66,7 @@ pub fn main() !void {
 
         zimgui.SetNextWindowPosExt(zimgui.Vec2.init(0, 0), .{}, zimgui.Vec2.init(0, 0));
         if (zimgui.Begin("Particle System")) {
+            zimgui.Text("%.3f ms/frame (%.1f FPS)", 1000.0 / delta, 1.0 / delta);
             if (zimgui.Button("Reset")) {
                 particle.runProgram(particle.init_program.?);
             }
@@ -74,5 +77,7 @@ pub fn main() !void {
 
         glfw.pollEvents();
         glfw.swapBuffers(init.window);
+
+        last = now;
     }
 }

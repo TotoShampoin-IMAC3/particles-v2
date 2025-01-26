@@ -26,6 +26,11 @@ layout(std430, binding = 2) buffer VelocityBuffer
     Particle particles_velocity[];
 };
 
+layout(std430, binding = 3) buffer InitVelocityBuffer
+{
+    Particle particles_init_velocity[];
+};
+
 uniform float u_delta_time;
 
 void update(inout Particle particle, inout Particle velocity, uint idx);
