@@ -41,8 +41,6 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("zgui", zgui.module("root"));
     exe.linkLibrary(zgui.artifact("imgui"));
 
-    exe.linkSystemLibrary("opengl32");
-
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);
