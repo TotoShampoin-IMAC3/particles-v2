@@ -36,7 +36,7 @@ All in compute shaders
   - [ ] frame size and framerate
   - [ ] particle count
   - [ ] particle parameters
-    - [ ] Detect uniforms and make them editable
+    - [x] Detect uniforms and make them editable
   - [ ] initial particles
 - [ ] Image sequence saving
   - [ ] Save as gif

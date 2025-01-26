@@ -92,6 +92,23 @@ pub fn main() !void {
             if (zimgui.Button("Reset particles")) {
                 particle.runProgram(particle.init_program.?);
             }
+            if (particle.uniforms) |uniforms|
+                for (uniforms) |*uniform| {
+                    const name = uniform.name;
+                    const name_s = try std.mem
+                        .concatWithSentinel(alloc.allocator, u8, &.{name}, 0);
+                    defer alloc.allocator.free(name_s);
+                    const edit = switch (uniform.type) {
+                        .int => zimgui.InputInt(name_s, &uniform.value.int),
+                        .float => zimgui.InputFloat(name_s, &uniform.value.float),
+                        .vec2 => zimgui.InputFloat2(name_s, &uniform.value.vec2),
+                        .vec3 => zimgui.InputFloat3(name_s, &uniform.value.vec3),
+                        .vec4 => zimgui.InputFloat4(name_s, &uniform.value.vec4),
+                    };
+                    if (edit) {
+                        particle.setUniform(uniform.*);
+                    }
+                };
             zimgui.End();
         }
 

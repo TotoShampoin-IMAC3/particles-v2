@@ -1,5 +1,6 @@
 const std = @import("std");
 const zgl = @import("zgl");
+const zimgui = @import("Zig-ImGui");
 
 const _alloc = @import("managers/allocator.zig");
 const _mesh = @import("managers/mesh.zig");
@@ -20,7 +21,7 @@ pub var render_program: zgl.Program = undefined;
 
 pub var init_program: ?zgl.Program = null;
 pub var update_program: ?zgl.Program = null;
-pub var uniforms: ?[]_shader.Uniform = null;
+pub var uniforms: ?[]_shader.UniformName = null;
 
 pub var uniform_delta_time: ?u32 = null;
 
@@ -74,6 +75,15 @@ pub fn loadProgram(path: []const u8) !void {
     init_program = try _shader.loadComputeMultiSources(2, .{ init_compute_source, file });
     update_program = try _shader.loadComputeMultiSources(2, .{ update_compute_source, file });
     uniforms = try _shader.getUniformsFromSource(file);
+    for (uniforms.?) |*uniform| {
+        const name = uniform.name;
+        const name_s = try std.mem
+            .concatWithSentinel(_alloc.allocator, u8, &.{name}, 0);
+        defer _alloc.allocator.free(name_s);
+        uniform.locations = try _alloc.allocator.alloc(?u32, 2);
+        uniform.locations[0] = init_program.?.uniformLocation(name_s);
+        uniform.locations[1] = update_program.?.uniformLocation(name_s);
+    }
     uniform_delta_time = update_program.?.uniformLocation("u_delta_time");
 }
 pub fn unloadProgram() void {
@@ -86,7 +96,7 @@ pub fn unloadProgram() void {
         update_program = null;
     }
     if (uniforms != null) {
-        _shader.Uniform.deleteAll(uniforms.?);
+        _shader.UniformName.deleteAll(uniforms.?);
         uniforms = null;
     }
 }
@@ -105,4 +115,40 @@ pub fn runProgram(program: zgl.Program) void {
 pub fn drawParticles() void {
     zgl.Program.use(render_program);
     mesh.drawInstanced(count);
+}
+
+pub fn setUniform(uniform: _shader.UniformName) void {
+    if (init_program == null or update_program == null) return;
+    switch (uniform.type) {
+        .int => {
+            if (uniform.locations[0]) |location|
+                init_program.?.uniform1i(location, uniform.value.int);
+            if (uniform.locations[1]) |location|
+                update_program.?.uniform1i(location, uniform.value.int);
+        },
+        .float => {
+            if (uniform.locations[0]) |location|
+                init_program.?.uniform1f(location, uniform.value.float);
+            if (uniform.locations[1]) |location|
+                update_program.?.uniform1f(location, uniform.value.float);
+        },
+        .vec2 => {
+            if (uniform.locations[0]) |location|
+                init_program.?.uniform2f(location, uniform.value.vec2[0], uniform.value.vec2[1]);
+            if (uniform.locations[1]) |location|
+                update_program.?.uniform2f(location, uniform.value.vec2[0], uniform.value.vec2[1]);
+        },
+        .vec3 => {
+            if (uniform.locations[0]) |location|
+                init_program.?.uniform3f(location, uniform.value.vec3[0], uniform.value.vec3[1], uniform.value.vec3[2]);
+            if (uniform.locations[1]) |location|
+                update_program.?.uniform3f(location, uniform.value.vec3[0], uniform.value.vec3[1], uniform.value.vec3[2]);
+        },
+        .vec4 => {
+            if (uniform.locations[0]) |location|
+                init_program.?.uniform4f(location, uniform.value.vec4[0], uniform.value.vec4[1], uniform.value.vec4[2], uniform.value.vec4[3]);
+            if (uniform.locations[1]) |location|
+                update_program.?.uniform4f(location, uniform.value.vec4[0], uniform.value.vec4[1], uniform.value.vec4[2], uniform.value.vec4[3]);
+        },
+    }
 }

@@ -14,6 +14,8 @@
 // - Particle particles_init_velocity[]
 // - float u_delta_time
 
+uniform vec3 u_gravity;
+
 void init(inout Particle particle, inout Particle velocity, uint idx)
 {
     particle.position = vec4(0.0, 0.0, 0.0, 1.0);
@@ -22,7 +24,7 @@ void init(inout Particle particle, inout Particle velocity, uint idx)
     particle.angle = 0.0;
     particle.life = 1.0;
 
-    velocity.position = vec4(0.0, -1.0, 0.0, 0.0);
+    velocity.position = vec4(0.0, 0.0, 0.0, 0.0);
     velocity.color = vec4(0.0, 0.0, 0.0, 0.0);
     velocity.size = 0.0;
     velocity.angle = 0.0;
@@ -31,4 +33,5 @@ void init(inout Particle particle, inout Particle velocity, uint idx)
 
 void update(inout Particle particle, inout Particle velocity, uint idx)
 {
+    velocity.position.xyz += u_gravity * u_delta_time;
 }
