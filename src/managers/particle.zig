@@ -16,22 +16,6 @@ pub const Particle = struct {
     _padding: [1]f32 = [_]f32{0.0} ** 1,
 };
 
-pub const initial_array = [_]Particle{
-    .{ .position = .{ 0.0, 0.0, 0.0, 1.0 } },
-    .{ .position = .{ 1.0, 1.0, 1.0, 1.0 } },
-    .{ .position = .{ -1.0, -1.0, 2.0, 1.0 } },
-    .{ .position = .{ -1.0, 1.0, 3.0, 1.0 } },
-};
-
-pub fn setupAndFill(
-    _mesh: *InstancedMesh,
-    particles: []const Particle,
-) void {
-    _mesh.importMesh(vertex.Vertex, shapes.quad_vertices[0..], shapes.quad_indices[0..]);
-    _mesh.importInstances(Particle, particles);
-    setupMesh(_mesh);
-}
-
 pub fn setupMesh(_mesh: *InstancedMesh, instance: zgl.Buffer) void {
     zgl.VertexArray.bind(_mesh.vao);
 

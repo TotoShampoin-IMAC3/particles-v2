@@ -10,3 +10,6 @@
 [submodule "modules/zlm"]
 	path = modules/zlm
 	url = https://github.com/ziglibs/zlm
+[submodule "modules/zgui"]
+	path = modules/zgui
+	url = https://github.com/zig-gamedev/zgui

@@ -34,15 +34,16 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addIncludePath(glfw.path("include"));
     exe.root_module.linkLibrary(glfw.artifact("glfw"));
 
-    b.installArtifact(exe);
-
-    const install = b.getInstallStep();
-    const install_data = b.addInstallDirectory(.{
-        .source_dir = b.path("res"),
-        .install_dir = .{ .prefix = {} },
-        .install_subdir = "bin/res",
+    const zgui = b.dependency("zgui", .{
+        .target = target,
+        .backend = .glfw_opengl3,
     });
-    install.dependOn(&install_data.step);
+    exe.root_module.addImport("zgui", zgui.module("root"));
+    exe.linkLibrary(zgui.artifact("imgui"));
+
+    exe.linkSystemLibrary("opengl32");
+
+    b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());

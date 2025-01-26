@@ -16,6 +16,7 @@
         .zglfw = .{ .path = "modules/zglfw" },
         .glfw = .{ .path = "modules/glfw" },
         .zlm = .{ .path = "modules/zlm" },
+        .zgui = .{ .path = "modules/zgui" },
     },
 
     .paths = .{
