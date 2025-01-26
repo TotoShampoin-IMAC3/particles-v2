@@ -33,7 +33,7 @@ pub fn main() !void {
 
     const view_matrix = zlm.Mat4
         .createLookAt(zlm.Vec3.unitZ.scale(-5), zlm.Vec3.zero, zlm.Vec3.unitY);
-    const perspective_zlm = zlm.Mat4
+    var perspective_zlm = zlm.Mat4
         .createPerspective(std.math.rad_per_deg * 45, 800.0 / 600.0, 0.1, 100.0);
 
     zgl.enable(.depth_test);
@@ -41,6 +41,21 @@ pub fn main() !void {
     particle.runProgram(particle.init_program.?);
 
     // ===== EVENTS =====
+
+    const Events = struct {
+        perspective_zlm: *zlm.Mat4,
+        pub fn windowSize(window: *glfw.Window, width: c_int, height: c_int) callconv(.C) void {
+            const data: *@This() = @alignCast(@ptrCast(glfw.getWindowUserPointer(window)));
+            const f_width: f32 = @floatFromInt(width);
+            const f_height: f32 = @floatFromInt(height);
+            data.perspective_zlm.* = zlm.Mat4
+                .createPerspective(std.math.rad_per_deg * 45, f_width / f_height, 0.1, 100.0);
+            zgl.viewport(0, 0, @intCast(width), @intCast(height));
+        }
+    };
+    var events = Events{ .perspective_zlm = &perspective_zlm };
+    glfw.setWindowUserPointer(init.window, &events);
+    _ = glfw.setWindowSizeCallback(init.window, Events.windowSize);
 
     imgui.start(init.window);
 
