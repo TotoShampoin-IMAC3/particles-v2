@@ -14,6 +14,7 @@ pub const Particle = _particle.Particle;
 const render_vertex_source = @embedFile("shaders/particle.vert");
 const render_fragment_source = @embedFile("shaders/particle.frag");
 
+const header_compute_source = @embedFile("shaders/header.comp");
 const init_compute_source = @embedFile("shaders/init.comp");
 const update_compute_source = @embedFile("shaders/update.comp");
 
@@ -72,8 +73,16 @@ pub fn loadProgram(path: []const u8) !void {
     defer _alloc.allocator.free(file);
 
     unloadProgram();
-    init_program = try _shader.loadComputeMultiSources(2, .{ init_compute_source, file });
-    update_program = try _shader.loadComputeMultiSources(2, .{ update_compute_source, file });
+    init_program = try _shader.loadComputeMultiSources(3, .{
+        header_compute_source,
+        file,
+        init_compute_source,
+    });
+    update_program = try _shader.loadComputeMultiSources(3, .{
+        header_compute_source,
+        file,
+        update_compute_source,
+    });
     uniforms = try _shader.getUniformsFromSource(file);
     for (uniforms.?) |*uniform| {
         const name = uniform.name;

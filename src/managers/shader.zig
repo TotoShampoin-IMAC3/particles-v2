@@ -20,7 +20,7 @@ pub fn loadShaderMultiSources(
     sources: [N][]const u8,
 ) !zgl.Shader {
     const shader = zgl.Shader.create(shaderType);
-    zgl.Shader.source(shader, 2, sources[0..]);
+    zgl.Shader.source(shader, N, sources[0..N]);
     zgl.Shader.compile(shader);
     if (zgl.Shader.get(shader, .compile_status) == 0) {
         const log = try zgl.Shader.getCompileLog(shader, alloc.allocator);
