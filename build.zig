@@ -1,4 +1,5 @@
 const std = @import("std");
+const zimgui = @import("./build-zimgui.zig");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -33,6 +34,34 @@ pub fn build(b: *std.Build) void {
     });
     exe.root_module.addIncludePath(glfw.path("include"));
     exe.root_module.linkLibrary(glfw.artifact("glfw"));
+
+    const ZigImGui_dep = b.dependency("ZigImGui", .{
+        .target = target,
+        .optimize = optimize,
+        .enable_freetype = true,
+        .enable_lunasvg = false,
+    });
+    const imgui_dep = ZigImGui_dep.builder.dependency("imgui", .{ .target = target, .optimize = optimize });
+
+    const imgui_glfw = zimgui.create_imgui_glfw_static_lib(
+        b,
+        target,
+        optimize,
+        glfw,
+        imgui_dep,
+        ZigImGui_dep,
+    );
+    const imgui_opengl = zimgui.create_imgui_opengl_static_lib(
+        b,
+        target,
+        optimize,
+        imgui_dep,
+        ZigImGui_dep,
+    );
+
+    exe.root_module.addImport("Zig-ImGui", ZigImGui_dep.module("Zig-ImGui"));
+    exe.linkLibrary(imgui_glfw);
+    exe.linkLibrary(imgui_opengl);
 
     b.installArtifact(exe);
 

@@ -1,6 +1,7 @@
 const std = @import("std");
 const glfw = @import("glfw");
 const zgl = @import("zgl");
+const imgui = @import("imgui.zig");
 
 const alloc = @import("managers/allocator.zig");
 const particle = @import("particle.zig");
@@ -14,6 +15,7 @@ pub fn init() !void {
     glfw.makeContextCurrent(window);
     try loadGl();
     try particle.init();
+    imgui.initContext();
 }
 pub fn deinit() void {
     particle.deinit();
