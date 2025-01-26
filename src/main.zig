@@ -2,8 +2,10 @@ const std = @import("std");
 const glfw = @import("glfw");
 const zgl = @import("zgl");
 const zlm = @import("zlm");
+const zimgui = @import("Zig-ImGui");
 
 const init = @import("init.zig");
+const imgui = @import("imgui.zig");
 const alloc = @import("managers/allocator.zig");
 const shader = @import("managers/shader.zig");
 const shapes = @import("managers/shapes.zig");
@@ -34,6 +36,10 @@ pub fn main() !void {
 
     particle.runProgram(particle.init_program.?);
 
+    // ===== EVENTS =====
+
+    imgui.start(init.window);
+
     // ===== MAIN LOOP =====
 
     const start = glfw.getTime();
@@ -53,6 +59,18 @@ pub fn main() !void {
         zgl.clear(.{ .color = true, .depth = true });
 
         particle.drawParticles();
+
+        imgui.beginDrawing();
+
+        zimgui.SetNextWindowPosExt(zimgui.Vec2.init(0, 0), .{}, zimgui.Vec2.init(0, 0));
+        if (zimgui.Begin("Particle System")) {
+            if (zimgui.Button("Reset")) {
+                particle.runProgram(particle.init_program.?);
+            }
+            zimgui.End();
+        }
+
+        imgui.endDrawing();
 
         glfw.pollEvents();
         glfw.swapBuffers(init.window);

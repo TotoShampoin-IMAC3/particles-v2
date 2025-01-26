@@ -2,7 +2,7 @@
     .name = "particles",
 
     .version = "0.1.0",
-    .minimum_zig_version = "0.14.0-dev.2851",
+    .minimum_zig_version = "0.13.0",
 
     .dependencies = .{
         // See `zig fetch --save <url>` for a command-line interface for adding dependencies.
@@ -16,6 +16,7 @@
         .zglfw = .{ .path = "modules/zglfw" },
         .glfw = .{ .path = "modules/glfw" },
         .zlm = .{ .path = "modules/zlm" },
+        .ZigImGui = .{ .path = "modules/Zig-ImGui" },
     },
 
     .paths = .{

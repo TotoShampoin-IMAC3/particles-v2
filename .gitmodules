@@ -10,3 +10,6 @@
 [submodule "modules/zlm"]
 	path = modules/zlm
 	url = https://github.com/ziglibs/zlm
+[submodule "modules/Zig-ImGui"]
+	path = modules/Zig-ImGui
+	url = https://gitlab.com/joshua.software.dev/Zig-ImGui
