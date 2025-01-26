@@ -63,6 +63,16 @@ pub fn main() !void {
 
         particle.drawParticles();
 
+        zgui.backend.newFrame(800, 600);
+
+        zgui.setNextWindowPos(.{ .x = 0, .y = 0 });
+        if (zgui.begin("My window", .{ .flags = .{ .no_move = true } })) {
+            zgui.text("Hello, world!", .{});
+        }
+
+        zgui.end();
+        zgui.backend.draw();
+
         glfw.pollEvents();
         glfw.swapBuffers(init.window);
     }

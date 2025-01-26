@@ -8,6 +8,7 @@ const particle = @import("particle.zig");
 pub var window: *glfw.Window = undefined;
 
 pub fn init() !void {
+    _ = @import("externals/opengl.zig");
     try alloc.init();
     try glfw.init();
     window = try glfw.createWindow(800, 600, "Hello, World!", null, null);
