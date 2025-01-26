@@ -20,6 +20,10 @@ pub fn main() !void {
     try particle.loadProgram("res/test.glsl");
     defer particle.unloadProgram();
 
+    var vsync = true;
+
+    glfw.swapInterval(@intFromBool(vsync));
+
     const particle_program = particle.render_program;
 
     const particle_view = particle_program.uniformLocation("u_view");
@@ -67,7 +71,10 @@ pub fn main() !void {
         zimgui.SetNextWindowPosExt(zimgui.Vec2.init(0, 0), .{}, zimgui.Vec2.init(0, 0));
         if (zimgui.Begin("Particle System")) {
             zimgui.Text("%.3f ms/frame (%.1f FPS)", 1000.0 / delta, 1.0 / delta);
-            if (zimgui.Button("Reset")) {
+            if (zimgui.Checkbox("VSync", &vsync)) {
+                glfw.swapInterval(@intFromBool(vsync));
+            }
+            if (zimgui.Button("Reset particles")) {
                 particle.runProgram(particle.init_program.?);
             }
             zimgui.End();
