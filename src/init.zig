@@ -11,7 +11,8 @@ pub var window: *glfw.Window = undefined;
 pub fn init() !void {
     try alloc.init();
     try glfw.init();
-    window = try glfw.createWindow(800, 600, "Hello, World!", null, null);
+    glfw.windowHint(glfw.Resizable, 0);
+    window = try glfw.createWindow(800, 600, "Particles", null, null);
     glfw.makeContextCurrent(window);
     try loadGl();
     try particle.init();

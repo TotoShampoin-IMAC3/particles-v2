@@ -31,10 +31,13 @@ pub fn main() !void {
 
     // ===== CAMERA =====
 
-    const view_matrix = zlm.Mat4
+    var view_matrix = zlm.Mat4
         .createLookAt(zlm.Vec3.unitZ.scale(-5), zlm.Vec3.zero, zlm.Vec3.unitY);
     var perspective_zlm = zlm.Mat4
         .createPerspective(std.math.rad_per_deg * 45, 800.0 / 600.0, 0.1, 100.0);
+
+    view_matrix = view_matrix;
+    perspective_zlm = perspective_zlm;
 
     zgl.enable(.depth_test);
 
@@ -42,20 +45,20 @@ pub fn main() !void {
 
     // ===== EVENTS =====
 
-    const Events = struct {
-        perspective_zlm: *zlm.Mat4,
-        pub fn windowSize(window: *glfw.Window, width: c_int, height: c_int) callconv(.C) void {
-            const data: *@This() = @alignCast(@ptrCast(glfw.getWindowUserPointer(window)));
-            const f_width: f32 = @floatFromInt(width);
-            const f_height: f32 = @floatFromInt(height);
-            data.perspective_zlm.* = zlm.Mat4
-                .createPerspective(std.math.rad_per_deg * 45, f_width / f_height, 0.1, 100.0);
-            zgl.viewport(0, 0, @intCast(width), @intCast(height));
-        }
-    };
-    var events = Events{ .perspective_zlm = &perspective_zlm };
-    glfw.setWindowUserPointer(init.window, &events);
-    _ = glfw.setWindowSizeCallback(init.window, Events.windowSize);
+    // const Events = struct {
+    //     perspective_zlm: *zlm.Mat4,
+    //     pub fn windowSize(window: *glfw.Window, width: c_int, height: c_int) callconv(.C) void {
+    //         const data: *@This() = @alignCast(@ptrCast(glfw.getWindowUserPointer(window)));
+    //         const f_width: f32 = @floatFromInt(width);
+    //         const f_height: f32 = @floatFromInt(height);
+    //         data.perspective_zlm.* = zlm.Mat4
+    //             .createPerspective(std.math.rad_per_deg * 45, f_width / f_height, 0.1, 100.0);
+    //         zgl.viewport(0, 0, @intCast(width), @intCast(height));
+    //     }
+    // };
+    // var events = Events{ .perspective_zlm = &perspective_zlm };
+    // glfw.setWindowUserPointer(init.window, &events);
+    // _ = glfw.setWindowSizeCallback(init.window, Events.windowSize);
 
     imgui.start(init.window);
 
@@ -84,7 +87,7 @@ pub fn main() !void {
         imgui.beginDrawing();
 
         zimgui.SetNextWindowPosExt(zimgui.Vec2.init(0, 0), .{}, zimgui.Vec2.init(0, 0));
-        if (zimgui.Begin("Particle System")) {
+        if (zimgui.BeginExt("Particle System", null, .{ .NoResize = true })) {
             zimgui.Text("%.3f ms/frame (%.1f FPS)", 1000.0 / delta, 1.0 / delta);
             if (zimgui.Checkbox("VSync", &vsync)) {
                 glfw.swapInterval(@intFromBool(vsync));
