@@ -33,7 +33,7 @@ All in compute shaders
 - [x] Load particle shader at runtime
   - [x] Process shader files, to store everything in a single file
 - [x] GUI
-  - [ ] frame size and framerate
+  - [x] frame size and framerate
   - [ ] particle count
   - [ ] particle parameters
     - [x] Detect uniforms and make them editable

@@ -1,6 +1,5 @@
 const std = @import("std");
 const zgl = @import("zgl");
-const zimgui = @import("Zig-ImGui");
 
 const _alloc = @import("managers/allocator.zig");
 const _mesh = @import("managers/mesh.zig");
@@ -110,15 +109,25 @@ pub fn unloadProgram() void {
     }
 }
 
-pub fn runProgram(program: zgl.Program) void {
-    zgl.Program.use(program);
-
+pub fn runProgram() void {
     zgl.bindBufferBase(.shader_storage_buffer, 0, now_buffer);
     zgl.bindBufferBase(.shader_storage_buffer, 1, init_buffer);
     zgl.bindBufferBase(.shader_storage_buffer, 2, velocity_buffer);
     zgl.bindBufferBase(.shader_storage_buffer, 3, init_velocity_buffer);
     zgl.binding.dispatchCompute(@intCast(count), 1, 1);
     zgl.binding.memoryBarrier(zgl.binding.SHADER_STORAGE_BARRIER_BIT);
+}
+
+pub fn runInit() void {
+    if (init_program == null) return;
+    zgl.Program.use(init_program.?);
+    runProgram();
+}
+pub fn runUpdate(delta: f32) void {
+    if (update_program == null) return;
+    zgl.Program.use(update_program.?);
+    update_program.?.uniform1f(uniform_delta_time.?, delta);
+    runProgram();
 }
 
 pub fn drawParticles() void {
