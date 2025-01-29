@@ -45,14 +45,7 @@ pub fn init() !void {
     velocity_buffer = zgl.Buffer.create();
     init_velocity_buffer = zgl.Buffer.create();
 
-    zgl.Buffer.bind(init_buffer, .shader_storage_buffer);
-    zgl.namedBufferUninitialized(init_buffer, Particle, count, .dynamic_draw);
-    zgl.Buffer.bind(now_buffer, .shader_storage_buffer);
-    zgl.namedBufferUninitialized(now_buffer, Particle, count, .dynamic_draw);
-    zgl.Buffer.bind(velocity_buffer, .shader_storage_buffer);
-    zgl.namedBufferUninitialized(velocity_buffer, Particle, count, .dynamic_draw);
-    zgl.Buffer.bind(init_velocity_buffer, .shader_storage_buffer);
-    zgl.namedBufferUninitialized(init_velocity_buffer, Particle, count, .dynamic_draw);
+    setCount(count);
 
     mesh.importMesh(_vertex.Vertex, _shapes.quad_vertices[0..], _shapes.quad_indices[0..]);
 
@@ -65,6 +58,18 @@ pub fn deinit() void {
     zgl.Buffer.delete(now_buffer);
     zgl.Buffer.delete(velocity_buffer);
     zgl.Buffer.delete(init_velocity_buffer);
+}
+
+pub fn setCount(new_count: usize) void {
+    zgl.Buffer.bind(init_buffer, .shader_storage_buffer);
+    zgl.namedBufferUninitialized(init_buffer, Particle, new_count, .dynamic_draw);
+    zgl.Buffer.bind(now_buffer, .shader_storage_buffer);
+    zgl.namedBufferUninitialized(now_buffer, Particle, new_count, .dynamic_draw);
+    zgl.Buffer.bind(velocity_buffer, .shader_storage_buffer);
+    zgl.namedBufferUninitialized(velocity_buffer, Particle, new_count, .dynamic_draw);
+    zgl.Buffer.bind(init_velocity_buffer, .shader_storage_buffer);
+    zgl.namedBufferUninitialized(init_velocity_buffer, Particle, new_count, .dynamic_draw);
+    count = new_count;
 }
 
 pub fn loadProgram(path: []const u8) !void {

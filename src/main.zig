@@ -15,6 +15,30 @@ const Frame = framebuffer.Frame;
 const INIT_WIDTH = 256;
 const INIT_HEIGHT = 256;
 
+fn cast(t: type, value: anytype) t {
+    return switch (@typeInfo(t)) {
+        .Bool => switch (@typeInfo(@TypeOf(value))) {
+            .Bool => value,
+            .Int => value != 0,
+            .Float => value != 0,
+            else => @compileError("Unsupported"),
+        },
+        .Int => switch (@typeInfo(@TypeOf(value))) {
+            .Bool => @as(t, @intFromBool(value)),
+            .Int => @as(t, @intCast(value)),
+            .Float => @as(t, @intFromFloat(value)),
+            else => @compileError("Unsupported"),
+        },
+        .Float => switch (@typeInfo(@TypeOf(value))) {
+            .Bool => if (value) 1.0 else 0.0,
+            .Int => @as(t, @floatFromInt(value)),
+            .Float => @as(t, @floatCast(value)),
+            else => @compileError("Unsupported"),
+        },
+        else => @compileError("Unsupported"),
+    };
+}
+
 pub fn main() !void {
     try init.init();
     defer init.deinit();
@@ -51,21 +75,6 @@ pub fn main() !void {
 
     // ===== EVENTS =====
 
-    const Events = struct {
-        perspective_zlm: *zlm.Mat4,
-        pub fn windowSize(window: *glfw.Window, width: c_int, height: c_int) callconv(.C) void {
-            const data: *@This() = @alignCast(@ptrCast(glfw.getWindowUserPointer(window)));
-            const f_width: f32 = @floatFromInt(width);
-            const f_height: f32 = @floatFromInt(height);
-            data.perspective_zlm.* = zlm.Mat4
-                .createPerspective(std.math.rad_per_deg * 45, f_width / f_height, 0.1, 100.0);
-            zgl.viewport(0, 0, @intCast(width), @intCast(height));
-        }
-    };
-    var events = Events{ .perspective_zlm = &perspective_zlm };
-    glfw.setWindowUserPointer(init.window, &events);
-    _ = glfw.setWindowSizeCallback(init.window, Events.windowSize);
-
     imgui.start(init.window);
 
     // ===== MAIN LOOP =====
@@ -80,6 +89,8 @@ pub fn main() !void {
     var interval: f32 = 1.0 / 30.0;
     var vsync = true;
     glfw.swapInterval(@intFromBool(vsync));
+
+    var particle_count = @as(i32, @intCast(particle.count));
 
     const start = glfw.getTime();
     var last = start;
@@ -127,10 +138,7 @@ pub fn main() !void {
             zimgui.End();
         }
 
-        zimgui.SetNextWindowPos(zimgui.Vec2.init(0, 0));
-        if (zimgui.BeginExt("Particle System", null, .{
-            .NoMove = true,
-        })) {
+        if (zimgui.Begin("Particle System")) {
             if (zimgui.Checkbox("VSync", &vsync)) {
                 glfw.swapInterval(@intFromBool(vsync));
                 if (!vsync) {
@@ -144,11 +152,18 @@ pub fn main() !void {
                 }
                 interval = 1.0 / @as(f32, @floatFromInt(framerate));
             }
-            if (zimgui.Button("Reset particles")) {
+            if (zimgui.InputInt2("Frame Size", &frame_size)) {
+                try frame.resize(@intCast(frame_size[0]), @intCast(frame_size[1]));
+                const ratio: f32 = cast(f32, frame_size[0]) / cast(f32, frame_size[1]);
+                perspective_zlm = zlm.Mat4
+                    .createPerspective(std.math.rad_per_deg * 45, ratio, 0.1, 100.0);
+            }
+            if (zimgui.InputInt("Particles count", &particle_count)) {
+                particle.setCount(@intCast(particle_count));
                 particle.runInit();
             }
-            if (zimgui.InputInt2("Size", &frame_size)) {
-                try frame.resize(@intCast(frame_size[0]), @intCast(frame_size[1]));
+            if (zimgui.Button("Reset particles")) {
+                particle.runInit();
             }
             if (particle.uniforms) |uniforms|
                 for (uniforms) |*uniform| {

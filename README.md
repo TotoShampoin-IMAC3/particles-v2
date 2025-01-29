@@ -35,7 +35,7 @@ All in compute shaders
   - [ ] Open file dialog to reload shader
 - [x] GUI
   - [x] frame size and framerate
-  - [ ] particle count
+  - [x] particle count
   - [ ] particle parameters
     - [x] Detect uniforms and make them editable
   - [ ] initial particles
