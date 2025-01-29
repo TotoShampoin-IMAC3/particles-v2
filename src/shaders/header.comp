@@ -32,3 +32,29 @@ layout(std430, binding = 3) buffer InitVelocityBuffer
 };
 
 uniform float u_delta_time;
+
+const float UINT_MAX_AS_FLOAT = 4294967295.;
+
+uint hash(uint seed)
+{
+    seed += (seed << 10u);
+    seed ^= (seed >> 6u);
+    seed += (seed << 3u);
+    seed ^= (seed >> 11u);
+    seed += (seed << 15u);
+    return seed;
+}
+
+uvec4 hashToHash4(uint seed)
+{
+    uint rand1 = hash(seed);
+    uint rand2 = hash(rand1);
+    uint rand3 = hash(rand2);
+    uint rand4 = hash(rand3);
+    return uvec4(rand1, rand2, rand3, rand4);
+}
+
+vec4 hashNormalized(uint seed)
+{
+    return vec4(hashToHash4(seed)) / UINT_MAX_AS_FLOAT;
+}

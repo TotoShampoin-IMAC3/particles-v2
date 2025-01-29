@@ -14,11 +14,16 @@
 // - Particle particles_init_velocity[]
 // - float u_delta_time
 
+// available functions:
+// - uint hash(uint seed)
+// - uvec4 hashToHash4(uint seed)
+// - vec4 hashNormalized(uint seed)
+
 uniform vec3 u_gravity;
 
 void init(inout Particle particle, inout Particle velocity, uint idx)
 {
-    particle.position = vec4(0.0, 0.0, 0.0, 1.0);
+    particle.position = vec4(hashNormalized(idx).xyz * 2 - 1, 1.0);
     particle.color = vec4(1.0, .5, .0, 1.0);
     particle.size = 0.25;
     particle.angle = 0.0;
