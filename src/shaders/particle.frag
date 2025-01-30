@@ -9,7 +9,7 @@ void main()
 {
     float dist = length(v_texcoord - 0.5);
 
-    float alpha = smoothstep(0.55, 0.45, dist);
+    float alpha = smoothstep(0.52, 0.48, dist);
 
     if (alpha < 0.5)
         discard;

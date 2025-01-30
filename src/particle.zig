@@ -149,6 +149,18 @@ pub fn setUniform(uniform: _shader.UniformName) void {
             if (uniform.locations[1]) |location|
                 update_program.?.uniform1i(location, uniform.value.int);
         },
+        .uint => {
+            if (uniform.locations[0]) |location|
+                init_program.?.uniform1ui(location, uniform.value.uint);
+            if (uniform.locations[1]) |location|
+                update_program.?.uniform1ui(location, uniform.value.uint);
+        },
+        .bool => {
+            if (uniform.locations[0]) |location|
+                init_program.?.uniform1i(location, if (uniform.value.bool) 1 else 0);
+            if (uniform.locations[1]) |location|
+                update_program.?.uniform1i(location, if (uniform.value.bool) 1 else 0);
+        },
         .float => {
             if (uniform.locations[0]) |location|
                 init_program.?.uniform1f(location, uniform.value.float);
@@ -172,6 +184,42 @@ pub fn setUniform(uniform: _shader.UniformName) void {
                 init_program.?.uniform4f(location, uniform.value.vec4[0], uniform.value.vec4[1], uniform.value.vec4[2], uniform.value.vec4[3]);
             if (uniform.locations[1]) |location|
                 update_program.?.uniform4f(location, uniform.value.vec4[0], uniform.value.vec4[1], uniform.value.vec4[2], uniform.value.vec4[3]);
+        },
+        .ivec2 => {
+            if (uniform.locations[0]) |location|
+                init_program.?.uniform2i(location, uniform.value.ivec2[0], uniform.value.ivec2[1]);
+            if (uniform.locations[1]) |location|
+                update_program.?.uniform2i(location, uniform.value.ivec2[0], uniform.value.ivec2[1]);
+        },
+        .ivec3 => {
+            if (uniform.locations[0]) |location|
+                init_program.?.uniform3i(location, uniform.value.ivec3[0], uniform.value.ivec3[1], uniform.value.ivec3[2]);
+            if (uniform.locations[1]) |location|
+                update_program.?.uniform3i(location, uniform.value.ivec3[0], uniform.value.ivec3[1], uniform.value.ivec3[2]);
+        },
+        .ivec4 => {
+            if (uniform.locations[0]) |location|
+                zgl.binding.uniform4i(@intCast(location), uniform.value.ivec4[0], uniform.value.ivec4[1], uniform.value.ivec4[2], uniform.value.ivec4[3]);
+            if (uniform.locations[1]) |location|
+                zgl.binding.uniform4i(@intCast(location), uniform.value.ivec4[0], uniform.value.ivec4[1], uniform.value.ivec4[2], uniform.value.ivec4[3]);
+        },
+        .mat2 => {
+            if (uniform.locations[0]) |location|
+                zgl.binding.uniformMatrix2fv(@intCast(location), 1, 0, &uniform.value.mat2[0][0]);
+            if (uniform.locations[1]) |location|
+                zgl.binding.uniformMatrix2fv(@intCast(location), 1, 0, &uniform.value.mat2[0][0]);
+        },
+        .mat3 => {
+            if (uniform.locations[0]) |location|
+                zgl.binding.uniformMatrix3fv(@intCast(location), 1, 0, &uniform.value.mat3[0][0]);
+            if (uniform.locations[1]) |location|
+                zgl.binding.uniformMatrix3fv(@intCast(location), 1, 0, &uniform.value.mat3[0][0]);
+        },
+        .mat4 => {
+            if (uniform.locations[0]) |location|
+                zgl.binding.uniformMatrix4fv(@intCast(location), 1, 0, &uniform.value.mat4[0][0]);
+            if (uniform.locations[1]) |location|
+                zgl.binding.uniformMatrix4fv(@intCast(location), 1, 0, &uniform.value.mat4[0][0]);
         },
     }
 }

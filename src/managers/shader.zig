@@ -84,13 +84,35 @@ pub fn loadComputeMultiSources(
     return program;
 }
 
-pub const UniformType = enum { int, float, vec2, vec3, vec4 };
+pub const UniformType = enum {
+    int,
+    uint,
+    bool,
+    float,
+    vec2,
+    vec3,
+    vec4,
+    ivec2,
+    ivec3,
+    ivec4,
+    mat2,
+    mat3,
+    mat4,
+};
 pub const UniformUnion = union {
     int: i32,
+    uint: u32,
+    bool: bool,
     float: f32,
     vec2: [2]f32,
     vec3: [3]f32,
     vec4: [4]f32,
+    ivec2: [2]i32,
+    ivec3: [3]i32,
+    ivec4: [4]i32,
+    mat2: [2][2]f32,
+    mat3: [3][3]f32,
+    mat4: [4][4]f32,
 };
 pub const UniformName = struct {
     name: []const u8,
@@ -108,10 +130,18 @@ pub const UniformName = struct {
         const second = tokens.next() orelse return null;
         const @"type": UniformType = t: {
             if (std.mem.eql(u8, second, "int")) break :t UniformType.int;
+            if (std.mem.eql(u8, second, "uint")) break :t UniformType.uint;
+            if (std.mem.eql(u8, second, "bool")) break :t UniformType.bool;
             if (std.mem.eql(u8, second, "float")) break :t UniformType.float;
             if (std.mem.eql(u8, second, "vec2")) break :t UniformType.vec2;
             if (std.mem.eql(u8, second, "vec3")) break :t UniformType.vec3;
             if (std.mem.eql(u8, second, "vec4")) break :t UniformType.vec4;
+            if (std.mem.eql(u8, second, "ivec2")) break :t UniformType.ivec2;
+            if (std.mem.eql(u8, second, "ivec3")) break :t UniformType.ivec3;
+            if (std.mem.eql(u8, second, "ivec4")) break :t UniformType.ivec4;
+            if (std.mem.eql(u8, second, "mat2")) break :t UniformType.mat2;
+            if (std.mem.eql(u8, second, "mat3")) break :t UniformType.mat3;
+            if (std.mem.eql(u8, second, "mat4")) break :t UniformType.mat4;
             break :t null;
         } orelse return null;
 
@@ -124,10 +154,19 @@ pub const UniformName = struct {
             .type = @"type",
             .value = switch (@"type") {
                 .int => .{ .int = 0 },
+                .uint => .{ .uint = 0 },
+                .bool => .{ .bool = false },
                 .float => .{ .float = 0.0 },
-                .vec2 => .{ .vec2 = [2]f32{ 0.0, 0.0 } },
-                .vec3 => .{ .vec3 = [3]f32{ 0.0, 0.0, 0.0 } },
-                .vec4 => .{ .vec4 = [4]f32{ 0.0, 0.0, 0.0, 0.0 } },
+                .vec2 => .{ .vec2 = .{ 0.0, 0.0 } },
+                .vec3 => .{ .vec3 = .{ 0.0, 0.0, 0.0 } },
+                .vec4 => .{ .vec4 = .{ 0.0, 0.0, 0.0, 0.0 } },
+                .ivec2 => .{ .ivec2 = .{ 0, 0 } },
+                .ivec3 => .{ .ivec3 = .{ 0, 0, 0 } },
+                .ivec4 => .{ .ivec4 = .{ 0, 0, 0, 0 } },
+                .mat2 => .{ .mat2 = .{ .{ 0.0, 0.0 }, .{ 0.0, 0.0 } } },
+                .mat3 => .{ .mat3 = .{ .{ 0.0, 0.0, 0.0 }, .{ 0.0, 0.0, 0.0 }, .{ 0.0, 0.0, 0.0 } } },
+                .mat4 => .{ .mat4 = .{ .{ 0.0, 0.0, 0.0, 0.0 }, .{ 0.0, 0.0, 0.0, 0.0 }, .{ 0.0, 0.0, 0.0, 0.0 }, .{ 0.0, 0.0, 0.0, 0.0 } } },
+                // else => unreachable,
             },
         };
     }
