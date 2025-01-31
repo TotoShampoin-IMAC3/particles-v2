@@ -32,7 +32,7 @@ All in compute shaders
   - [x] Implement
 - [x] Load particle shader at runtime
   - [x] Process shader files, to store everything in a single file
-  - [ ] Open file dialog to reload shader
+  - [x] Open file dialog to reload shader
 - [x] GUI
   - [x] frame size and framerate
   - [x] particle count
