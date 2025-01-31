@@ -13,8 +13,8 @@ const framebuffer = @import("managers/framebuffer.zig");
 
 const Frame = framebuffer.Frame;
 
-const INIT_WIDTH = 256;
-const INIT_HEIGHT = 256;
+const INIT_WIDTH = 512;
+const INIT_HEIGHT = 512;
 const FOV = 90.0;
 const NEAR = 0.01;
 const FAR = 100.0;
@@ -84,6 +84,7 @@ pub fn main() !void {
     // ===== EVENTS =====
 
     imgui.start(init.window);
+    defer imgui.stop();
 
     zimgui.GetIO().ConfigFlags.DockingEnable = true;
 

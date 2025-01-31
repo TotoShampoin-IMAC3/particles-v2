@@ -71,7 +71,9 @@ pub fn build(b: *std.Build) void {
         .install_dir = .{ .prefix = {} },
         .install_subdir = "bin/res",
     });
+    const install_imgui_config = b.addInstallFile(b.path("res/imgui-default.ini"), "bin/imgui.ini");
     install.dependOn(&install_data.step);
+    install.dependOn(&install_imgui_config.step);
 
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
