@@ -9,7 +9,7 @@ OpenGL Particle system in Zig
 - size: `float`
 - angle: `float`
 - lifetime: `float`
-- (padding): `[5]float`
+- (padding): `[1]float`
 
 Separate particle buffers, for extra flexibility
 
@@ -38,6 +38,8 @@ All in compute shaders
   - [x] particle count
   - [ ] particle parameters
     - [x] Detect uniforms and make them editable
-  - [ ] initial particles
+  - [ ] Camera settings
+    - [ ] Projection type, and parameters
+    - [ ] Camera position and orientation (?)
 - [ ] Image sequence saving
   - [ ] Save as gif
