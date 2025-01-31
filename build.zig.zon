@@ -17,6 +17,7 @@
         .glfw = .{ .path = "modules/glfw" },
         .zlm = .{ .path = "modules/zlm" },
         .ZigImGui = .{ .path = "modules/Zig-ImGui" },
+        .nfd = .{ .path = "modules/nfd-zig" },
     },
 
     .paths = .{

@@ -13,3 +13,6 @@
 [submodule "modules/Zig-ImGui"]
 	path = modules/Zig-ImGui
 	url = https://gitlab.com/joshua.software.dev/Zig-ImGui
+[submodule "modules/nfd-zig"]
+	path = modules/nfd-zig
+	url = https://github.com/fabioarnold/nfd-zig

@@ -24,6 +24,7 @@ pub var update_program: ?zgl.Program = null;
 pub var uniforms: ?[]_shader.UniformName = null;
 
 pub var uniform_delta_time: ?u32 = null;
+pub var uniform_time: ?u32 = null;
 
 pub var mesh: _mesh.Mesh = undefined;
 
@@ -72,32 +73,54 @@ pub fn setCount(new_count: usize) void {
     count = new_count;
 }
 
-pub fn loadProgram(path: []const u8) !void {
+pub fn loadProgram(path: []const u8, use_same_values: bool) !void {
     const file = try std.fs.cwd().readFileAlloc(_alloc.allocator, path, 65536);
     defer _alloc.allocator.free(file);
 
-    unloadProgram();
-    init_program = try _shader.loadComputeMultiSources(3, .{
+    var success = false;
+
+    const new_init_program = try _shader.loadComputeMultiSources(3, .{
         header_compute_source,
         file,
         init_compute_source,
     });
-    update_program = try _shader.loadComputeMultiSources(3, .{
+    defer if (!success) zgl.Program.delete(new_init_program);
+    const new_update_program = try _shader.loadComputeMultiSources(3, .{
         header_compute_source,
         file,
         update_compute_source,
     });
-    uniforms = try _shader.getUniformsFromSource(file);
-    for (uniforms.?) |*uniform| {
+    defer if (!success) zgl.Program.delete(new_update_program);
+    const new_uniforms = try _shader.getUniformsFromSource(file);
+
+    for (new_uniforms, 0..) |*uniform, idx| {
         const name = uniform.name;
         const name_s = try std.mem
             .concatWithSentinel(_alloc.allocator, u8, &.{name}, 0);
         defer _alloc.allocator.free(name_s);
         uniform.locations = try _alloc.allocator.alloc(?u32, 2);
-        uniform.locations[0] = init_program.?.uniformLocation(name_s);
-        uniform.locations[1] = update_program.?.uniformLocation(name_s);
+        uniform.locations[0] = new_init_program.uniformLocation(name_s);
+        uniform.locations[1] = new_update_program.uniformLocation(name_s);
+        if (use_same_values) {
+            if (uniforms) |u| {
+                uniform.value = u[idx].value;
+            }
+        }
     }
-    uniform_delta_time = update_program.?.uniformLocation("u_delta_time");
+    defer if (!success) _shader.UniformName.deleteAll(new_uniforms);
+    const new_uniform_delta_time = new_update_program.uniformLocation("u_delta_time");
+    const new_uniform_time = new_update_program.uniformLocation("u_time");
+
+    unloadProgram();
+    init_program = new_init_program;
+    update_program = new_update_program;
+    uniforms = new_uniforms;
+    uniform_delta_time = new_uniform_delta_time;
+    uniform_time = new_uniform_time;
+    for (uniforms.?) |uniform| {
+        setUniform(uniform);
+    }
+    success = true;
 }
 pub fn unloadProgram() void {
     if (init_program) |program| {
@@ -123,15 +146,23 @@ pub fn runProgram() void {
     zgl.binding.memoryBarrier(zgl.binding.SHADER_STORAGE_BARRIER_BIT);
 }
 
+pub const Data = struct {
+    delta_time: f32 = 0.0,
+    time: f32 = 0.0,
+};
+
 pub fn runInit() void {
     if (init_program == null) return;
     zgl.Program.use(init_program.?);
     runProgram();
 }
-pub fn runUpdate(delta: f32) void {
+pub fn runUpdate(data: Data) void {
     if (update_program == null) return;
     zgl.Program.use(update_program.?);
-    update_program.?.uniform1f(uniform_delta_time.?, delta);
+    if (uniform_delta_time) |unif|
+        update_program.?.uniform1f(unif, data.delta_time);
+    if (uniform_time) |unif|
+        update_program.?.uniform1f(unif, data.time);
     runProgram();
 }
 

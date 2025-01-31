@@ -3,12 +3,14 @@ const glfw = @import("glfw");
 const zgl = @import("zgl");
 const zlm = @import("zlm");
 const zimgui = @import("Zig-ImGui");
+const nfd = @import("nfd");
 
 const alloc = @import("managers/allocator.zig");
 const shader = @import("managers/shader.zig");
 const init = @import("init.zig");
 const imgui = @import("imgui.zig");
 const particle = @import("particle.zig");
+const file_states = @import("file_states.zig");
 const framebuffer = @import("managers/framebuffer.zig");
 const cast = @import("utils/cast.zig");
 
@@ -21,22 +23,44 @@ const NEAR = 0.01;
 const FAR = 100.0;
 const POV = 2.0;
 
+fn changeShader(path: [:0]const u8, reload: bool) anyerror!void {
+    try particle.loadProgram(path, reload);
+}
+
 pub fn main() !void {
+    // ===== INITIALIZATION =====
+
     try init.init();
     defer init.deinit();
 
-    try particle.loadProgram("res/test.glsl");
+    try particle.loadProgram("res/test.glsl", false);
     defer particle.unloadProgram();
 
-    const particle_program = particle.render_program;
+    try file_states.init();
+    defer file_states.deinit();
 
-    const particle_view = particle_program.uniformLocation("u_view");
-    const particle_projection = particle_program.uniformLocation("u_projection");
+    file_states.on_new_shader_loaded = changeShader;
+
+    const particle_program = particle.render_program;
 
     var frame = try Frame.create(INIT_WIDTH, INIT_HEIGHT);
     defer frame.delete();
 
+    var frame_size: [2]i32 = .{
+        cast.cast(i32, frame.width),
+        cast.cast(i32, frame.height),
+    };
+    var framerate: i32 = 30;
+    var interval: f32 = 1.0 / 30.0;
+    var vsync = true;
+    glfw.swapInterval(cast.cast(c_int, vsync));
+
+    var particle_count = cast.cast(i32, particle.count);
+
     // ===== CAMERA =====
+
+    const particle_view = particle_program.uniformLocation("u_view");
+    const particle_projection = particle_program.uniformLocation("u_projection");
 
     var view_matrix = zlm.Mat4
         .createLookAt(zlm.Vec3.unitZ.scale(-POV), zlm.Vec3.zero, zlm.Vec3.unitY);
@@ -64,19 +88,6 @@ pub fn main() !void {
 
     // ===== MAIN LOOP =====
 
-    var frame_size: [2]i32 = .{
-        cast.cast(i32, frame.width),
-        cast.cast(i32, frame.height),
-    };
-    var framerate: i32 = 30;
-    var interval: f32 = 1.0 / 30.0;
-    var vsync = true;
-    glfw.swapInterval(cast.cast(c_int, vsync));
-
-    var particle_count = cast.cast(i32, particle.count);
-
-    var first = true;
-
     const start = glfw.getTime();
     var last = start;
     var last_frame = start;
@@ -86,10 +97,16 @@ pub fn main() !void {
         const delta = now - last;
 
         if (vsync) {
-            particle.runUpdate(cast.cast(f32, delta));
+            particle.runUpdate(.{
+                .delta_time = cast.cast(f32, delta),
+                .time = cast.cast(f32, now - start),
+            });
         } else {
             if (now - last_frame > interval) {
-                particle.runUpdate(interval);
+                particle.runUpdate(.{
+                    .delta_time = interval,
+                    .time = cast.cast(f32, now - start),
+                });
                 last_frame = now;
             }
         }
@@ -117,7 +134,6 @@ pub fn main() !void {
 
         {
             _ = zimgui.DockSpaceOverViewport();
-            if (first) {}
 
             if (zimgui.Begin("Info")) {
                 zimgui.Text("%.3f ms/frame (%.1f FPS)", 1000.0 / delta, 1.0 / delta);
@@ -152,7 +168,17 @@ pub fn main() !void {
                     }
                 }
                 zimgui.SeparatorText("Particles");
-                if (zimgui.Button("Reset particles")) {
+                if (zimgui.Button("Load shader")) {
+                    const file = try nfd.openFileDialog("glsl", null);
+                    if (file) |f| {
+                        defer nfd.freePath(f);
+                        file_states.loadShader(f) catch {};
+                        particle.runInit();
+                    }
+                }
+                zimgui.SameLine();
+                if (zimgui.Button("Reload")) {
+                    file_states.reloadShader() catch {};
                     particle.runInit();
                 }
                 if (zimgui.InputInt("Particles count", &particle_count)) {
@@ -191,7 +217,6 @@ pub fn main() !void {
         glfw.swapBuffers(init.window);
 
         last = now;
-        if (first) first = false;
     }
 }
 

@@ -63,6 +63,9 @@ pub fn build(b: *std.Build) void {
     exe.linkLibrary(imgui_glfw);
     exe.linkLibrary(imgui_opengl);
 
+    const nfd = b.dependency("nfd", .{});
+    exe.root_module.addImport("nfd", nfd.module("nfd"));
+
     b.installArtifact(exe);
 
     const install = b.getInstallStep();
