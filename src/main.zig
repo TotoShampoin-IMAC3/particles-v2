@@ -10,6 +10,7 @@ const init = @import("init.zig");
 const imgui = @import("imgui.zig");
 const particle = @import("particle.zig");
 const framebuffer = @import("managers/framebuffer.zig");
+const cast = @import("utils/cast.zig");
 
 const Frame = framebuffer.Frame;
 
@@ -19,33 +20,6 @@ const FOV = 90.0;
 const NEAR = 0.01;
 const FAR = 100.0;
 const POV = 2.0;
-
-fn cast(t: type, value: anytype) t {
-    return switch (@typeInfo(t)) {
-        .Bool => switch (@typeInfo(@TypeOf(value))) {
-            .Bool => value,
-            .Int => value != 0,
-            .Float => value != 0,
-            else => @compileError("Unsupported"),
-        },
-        .Int => switch (@typeInfo(@TypeOf(value))) {
-            .Bool => @as(t, @intFromBool(value)),
-            .Int => @as(t, @intCast(value)),
-            .Float => @as(t, @intFromFloat(value)),
-            else => @compileError("Unsupported"),
-        },
-        .Float => switch (@typeInfo(@TypeOf(value))) {
-            .Bool => if (value) 1.0 else 0.0,
-            .Int => @as(t, @floatFromInt(value)),
-            .Float => @as(t, @floatCast(value)),
-            else => @compileError("Unsupported"),
-        },
-        else => @compileError("Unsupported"),
-    };
-}
-fn enumCast(t: type, value: anytype) t {
-    return @enumFromInt(@intFromEnum(value));
-}
 
 pub fn main() !void {
     try init.init();
@@ -69,7 +43,7 @@ pub fn main() !void {
     var perspective_zlm = zlm.Mat4
         .createPerspective(
         std.math.rad_per_deg * FOV,
-        cast(f32, frame.width) / cast(f32, frame.height),
+        cast.cast(f32, frame.width) / cast.cast(f32, frame.height),
         NEAR,
         FAR,
     );
@@ -91,15 +65,15 @@ pub fn main() !void {
     // ===== MAIN LOOP =====
 
     var frame_size: [2]i32 = .{
-        cast(i32, frame.width),
-        cast(i32, frame.height),
+        cast.cast(i32, frame.width),
+        cast.cast(i32, frame.height),
     };
     var framerate: i32 = 30;
     var interval: f32 = 1.0 / 30.0;
     var vsync = true;
-    glfw.swapInterval(cast(c_int, vsync));
+    glfw.swapInterval(cast.cast(c_int, vsync));
 
-    var particle_count = cast(i32, particle.count);
+    var particle_count = cast.cast(i32, particle.count);
 
     var first = true;
 
@@ -112,7 +86,7 @@ pub fn main() !void {
         const delta = now - last;
 
         if (vsync) {
-            particle.runUpdate(cast(f32, delta));
+            particle.runUpdate(cast.cast(f32, delta));
         } else {
             if (now - last_frame > interval) {
                 particle.runUpdate(interval);
@@ -159,8 +133,8 @@ pub fn main() !void {
             if (zimgui.Begin("Parameters")) {
                 zimgui.SeparatorText("Frame");
                 if (zimgui.InputInt2("Frame Size", &frame_size)) {
-                    try frame.resize(cast(usize, frame_size[0]), cast(usize, frame_size[1]));
-                    const ratio: f32 = cast(f32, frame_size[0]) / cast(f32, frame_size[1]);
+                    try frame.resize(cast.cast(usize, frame_size[0]), cast.cast(usize, frame_size[1]));
+                    const ratio: f32 = cast.cast(f32, frame_size[0]) / cast.cast(f32, frame_size[1]);
                     perspective_zlm = zlm.Mat4
                         .createPerspective(std.math.rad_per_deg * FOV, ratio, NEAR, FAR);
                 }
@@ -168,12 +142,12 @@ pub fn main() !void {
                     if (framerate < 1) {
                         framerate = 1;
                     }
-                    interval = 1.0 / cast(f32, framerate);
+                    interval = 1.0 / cast.cast(f32, framerate);
                 }
                 if (zimgui.Checkbox("VSync", &vsync)) {
-                    glfw.swapInterval(cast(c_int, vsync));
+                    glfw.swapInterval(cast.cast(c_int, vsync));
                     if (!vsync) {
-                        interval = 1.0 / cast(f32, framerate);
+                        interval = 1.0 / cast.cast(f32, framerate);
                         last_frame = now;
                     }
                 }
@@ -182,7 +156,7 @@ pub fn main() !void {
                     particle.runInit();
                 }
                 if (zimgui.InputInt("Particles count", &particle_count)) {
-                    particle.setCount(cast(usize, particle_count));
+                    particle.setCount(cast.cast(usize, particle_count));
                     particle.runInit();
                 }
                 if (particle.uniforms) |uniforms| {
@@ -197,14 +171,14 @@ pub fn main() !void {
             if (zimgui.Begin("Preview")) {
                 const size = zimgui.GetWindowSize();
                 zimgui.SetCursorPos(.{
-                    .x = (size.x - cast(f32, frame.width)) / 2.0,
-                    .y = (size.y - cast(f32, frame.height)) / 2.0,
+                    .x = (size.x - cast.cast(f32, frame.width)) / 2.0,
+                    .y = (size.y - cast.cast(f32, frame.height)) / 2.0,
                 });
                 zimgui.Image(
-                    enumCast(zimgui.TextureID, frame.texture),
+                    cast.enumCast(zimgui.TextureID, frame.texture),
                     zimgui.Vec2.init(
-                        cast(f32, frame.width),
-                        cast(f32, frame.height),
+                        cast.cast(f32, frame.width),
+                        cast.cast(f32, frame.height),
                     ),
                 );
             }
