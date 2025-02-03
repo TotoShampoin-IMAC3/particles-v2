@@ -27,6 +27,42 @@ fn changeShader(path: [:0]const u8, reload: bool) anyerror!void {
     try particle.loadProgram(path, reload);
 }
 
+const ProjectionParameters = struct {
+    perspective: struct {
+        fov: f32 = FOV,
+        aspect: f32 = 1.0,
+        near: f32 = NEAR,
+        far: f32 = FAR,
+    } = .{},
+    orthographic: struct {
+        size: f32 = 2.0,
+        aspect: f32 = 1.0,
+        depth: f32 = 2.0,
+    } = .{},
+    is_perspective: bool = true,
+    frame_aspect: f32 = 1.0,
+};
+fn generateProjection(params: ProjectionParameters) zlm.Mat4 {
+    return switch (params.is_perspective) {
+        true => zlm.Mat4
+            .createPerspective(
+            std.math.rad_per_deg * params.perspective.fov,
+            params.perspective.aspect * params.frame_aspect,
+            params.perspective.near,
+            params.perspective.far,
+        ),
+        false => zlm.Mat4
+            .createOrthogonal(
+            -params.orthographic.size * params.frame_aspect * params.orthographic.aspect / 2,
+            params.orthographic.size * params.frame_aspect * params.orthographic.aspect / 2,
+            -params.orthographic.size / 2,
+            params.orthographic.size / 2,
+            0,
+            params.orthographic.depth,
+        ),
+    };
+}
+
 pub fn main() !void {
     // ===== INITIALIZATION =====
 
@@ -62,18 +98,22 @@ pub fn main() !void {
     const particle_view = particle_program.uniformLocation("u_view");
     const particle_projection = particle_program.uniformLocation("u_projection");
 
-    var view_matrix = zlm.Mat4
-        .createLookAt(zlm.Vec3.unitZ.scale(-POV), zlm.Vec3.zero, zlm.Vec3.unitY);
-    var perspective_zlm = zlm.Mat4
-        .createPerspective(
-        std.math.rad_per_deg * FOV,
-        cast.cast(f32, frame.width) / cast.cast(f32, frame.height),
-        NEAR,
-        FAR,
-    );
+    var camera_position = zlm.Vec3.unitZ.scale(-POV);
+    var camera_target = zlm.Vec3.zero;
+    const camera_up = zlm.Vec3.unitY;
 
-    view_matrix = view_matrix;
-    perspective_zlm = perspective_zlm;
+    var view_matrix = zlm.Mat4
+        .createLookAt(camera_position, camera_target, camera_up);
+    var projection_params = ProjectionParameters{
+        .perspective = .{
+            .fov = FOV,
+            .aspect = 1.0,
+            .near = NEAR,
+            .far = FAR,
+        },
+        .frame_aspect = cast.cast(f32, frame.width) / cast.cast(f32, frame.height),
+    };
+    var perspective_zlm = generateProjection(projection_params);
 
     zgl.enable(.depth_test);
 
@@ -150,9 +190,9 @@ pub fn main() !void {
                 zimgui.SeparatorText("Frame");
                 if (zimgui.InputInt2("Frame Size", &frame_size)) {
                     try frame.resize(cast.cast(usize, frame_size[0]), cast.cast(usize, frame_size[1]));
-                    const ratio: f32 = cast.cast(f32, frame_size[0]) / cast.cast(f32, frame_size[1]);
-                    perspective_zlm = zlm.Mat4
-                        .createPerspective(std.math.rad_per_deg * FOV, ratio, NEAR, FAR);
+                    projection_params.frame_aspect =
+                        cast.cast(f32, frame_size[0]) / cast.cast(f32, frame_size[1]);
+                    perspective_zlm = generateProjection(projection_params);
                 }
                 if (zimgui.InputInt("Framerate", &framerate)) {
                     if (framerate < 1) {
@@ -167,6 +207,32 @@ pub fn main() !void {
                         last_frame = now;
                     }
                 }
+                zimgui.Separator();
+                zimgui.SeparatorText("Camera");
+                var view_edit = false;
+                view_edit = zimgui.SliderFloat3("Position", @ptrCast(&camera_position), -3, 3) or view_edit;
+                view_edit = zimgui.SliderFloat3("Target", @ptrCast(&camera_target), -1, 1) or view_edit;
+                if (view_edit) {
+                    view_matrix = zlm.Mat4
+                        .createLookAt(camera_position, camera_target, camera_up);
+                }
+                var proj_edit = false;
+                proj_edit = zimgui.Checkbox("Perspective", &projection_params.is_perspective) or proj_edit;
+                if (projection_params.is_perspective) {
+                    proj_edit = zimgui.SliderFloat("FOV", &projection_params.perspective.fov, 0, 180) or proj_edit;
+                    proj_edit = zimgui.SliderFloat("Aspect", &projection_params.perspective.aspect, 0.1, 10) or proj_edit;
+                    proj_edit = zimgui.SliderFloat("Near", &projection_params.perspective.near, 0.001, 10) or proj_edit;
+                    proj_edit = zimgui.SliderFloat("Far", &projection_params.perspective.far, 0.001, 10) or proj_edit;
+                } else {
+                    proj_edit = zimgui.SliderFloat("Size", &projection_params.orthographic.size, 0.001, 10) or proj_edit;
+                    proj_edit = zimgui.SliderFloat("Aspect", &projection_params.orthographic.aspect, 0.1, 10) or proj_edit;
+                    proj_edit = zimgui.SliderFloat("Depth", &projection_params.orthographic.depth, 0.001, 10) or proj_edit;
+                }
+                if (proj_edit) {
+                    perspective_zlm = generateProjection(projection_params);
+                }
+
+                zimgui.Separator();
                 zimgui.SeparatorText("Particles");
                 if (zimgui.Button("Load shader")) {
                     const file = try nfd.openFileDialog("glsl", null);

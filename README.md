@@ -39,9 +39,9 @@ All in compute shaders
   - [x] particle count
   - [x] particle parameters
     - [x] Detect uniforms and make them editable
-  - [ ] Camera settings
-    - [ ] Projection type, and parameters
-    - [ ] Camera position and orientation (?)
+  - [x] Camera settings
+    - [x] Projection type, and parameters
+    - [x] Camera position and orientation (?)
   - [ ] Change particle appearance
     - [ ] Plain squares
     - [ ] Circles
