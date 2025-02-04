@@ -48,7 +48,7 @@ pub fn main() !void {
     };
     var framerate: i32 = 30;
     var interval: f32 = 1.0 / 30.0;
-    var vsync = true;
+    var vsync = false;
     glfw.swapInterval(cast.cast(c_int, vsync));
 
     var particle_count = cast.cast(i32, particle.count);
@@ -67,13 +67,12 @@ pub fn main() !void {
     var view_matrix = zlm.Mat4
         .createLookAt(camera_position, camera_target, camera_up);
     var projection_params = ProjectionParameters{
-        .perspective = .{
-            .fov = FOV,
-            .aspect = 1.0,
-            .near = NEAR,
-            .far = FAR,
-        },
+        .perspective_fov = FOV,
+        .orthographic_size = POV,
         .frame_aspect = cast.cast(f32, frame.width) / cast.cast(f32, frame.height),
+        .user_aspect = 1.0,
+        .near = NEAR,
+        .far = FAR,
     };
     var perspective_zlm = generateProjection(projection_params);
 
@@ -97,6 +96,8 @@ pub fn main() !void {
         const now = glfw.getTime();
         // const elapsed = now - start;
         const delta = now - last;
+        const f64_framerate = cast.cast(f64, framerate);
+        const frame_time = @floor((now - start) * f64_framerate) / f64_framerate;
 
         if (vsync) {
             particle.runUpdate(.{
@@ -107,7 +108,7 @@ pub fn main() !void {
             if (now - last_frame > interval) {
                 particle.runUpdate(.{
                     .delta_time = interval,
-                    .time = cast.cast(f32, now - start),
+                    .time = cast.cast(f32, frame_time),
                 });
                 last_frame = now;
             }
@@ -139,10 +140,9 @@ pub fn main() !void {
             _ = zimgui.DockSpaceOverViewport();
 
             if (zimgui.Begin("Info")) {
-                const f64_framerate = cast.cast(f64, framerate);
                 zimgui.Text("%.3f ms/frame (%.1f FPS)", 1000.0 / delta, 1.0 / delta);
                 zimgui.Text("time: %.3f s", now);
-                zimgui.Text("frame: %.3f s", @floor((now - start) * f64_framerate) / f64_framerate);
+                zimgui.Text("frame: %.3f s", frame_time);
             }
             zimgui.End();
 
@@ -179,15 +179,13 @@ pub fn main() !void {
                 var proj_edit = false;
                 proj_edit = zimgui.Checkbox("Perspective", &projection_params.is_perspective) or proj_edit;
                 if (projection_params.is_perspective) {
-                    proj_edit = zimgui.SliderFloat("FOV", &projection_params.perspective.fov, 0, 180) or proj_edit;
-                    proj_edit = zimgui.SliderFloat("Aspect", &projection_params.perspective.aspect, 0.1, 10) or proj_edit;
-                    proj_edit = zimgui.SliderFloat("Near", &projection_params.perspective.near, 0.001, 10) or proj_edit;
-                    proj_edit = zimgui.SliderFloat("Far", &projection_params.perspective.far, 0.001, 10) or proj_edit;
+                    proj_edit = zimgui.SliderFloat("FOV", &projection_params.perspective_fov, 0, 180) or proj_edit;
                 } else {
-                    proj_edit = zimgui.SliderFloat("Size", &projection_params.orthographic.size, 0.001, 10) or proj_edit;
-                    proj_edit = zimgui.SliderFloat("Aspect", &projection_params.orthographic.aspect, 0.1, 10) or proj_edit;
-                    proj_edit = zimgui.SliderFloat("Depth", &projection_params.orthographic.depth, 0.001, 10) or proj_edit;
+                    proj_edit = zimgui.SliderFloat("Size", &projection_params.orthographic_size, 0.001, 10) or proj_edit;
                 }
+                proj_edit = zimgui.SliderFloat("Aspect", &projection_params.user_aspect, 0.1, 10) or proj_edit;
+                proj_edit = zimgui.SliderFloat("Near", &projection_params.near, 0.001, 10) or proj_edit;
+                proj_edit = zimgui.SliderFloat("Far", &projection_params.far, 0.001, 10) or proj_edit;
                 if (proj_edit) {
                     perspective_zlm = generateProjection(projection_params);
                 }
@@ -329,37 +327,36 @@ pub fn handleUniformWithImgui(uniform: *shader.UniformName) !void {
 }
 
 const ProjectionParameters = struct {
-    perspective: struct {
-        fov: f32 = FOV,
-        aspect: f32 = 1.0,
-        near: f32 = NEAR,
-        far: f32 = FAR,
-    } = .{},
-    orthographic: struct {
-        size: f32 = 2.0,
-        aspect: f32 = 1.0,
-        depth: f32 = 2.0,
-    } = .{},
+    // perspective: struct {
+    //     fov: f32 = FOV,
+    //     aspect: f32 = 1.0,
+    //     near: f32 = NEAR,
+    //     far: f32 = FAR,
+    // } = .{},
+    // orthographic: struct {
+    //     size: f32 = 2.0,
+    //     aspect: f32 = 1.0,
+    //     depth: f32 = 2.0,
+    // } = .{},
     is_perspective: bool = true,
+    perspective_fov: f32 = FOV,
+    orthographic_size: f32 = 2.0,
     frame_aspect: f32 = 1.0,
+    user_aspect: f32 = 1.0,
+    near: f32 = NEAR,
+    far: f32 = FAR,
 };
 fn generateProjection(params: ProjectionParameters) zlm.Mat4 {
+    const fov = std.math.rad_per_deg * params.perspective_fov;
+    const aspect = params.user_aspect * params.frame_aspect;
+    const size_x = params.orthographic_size * aspect / 2;
+    const size_y = params.orthographic_size / 2;
+    const near = params.near;
+    const far = params.far;
     return switch (params.is_perspective) {
         true => zlm.Mat4
-            .createPerspective(
-            std.math.rad_per_deg * params.perspective.fov,
-            params.perspective.aspect * params.frame_aspect,
-            params.perspective.near,
-            params.perspective.far,
-        ),
+            .createPerspective(fov, aspect, near, far),
         false => zlm.Mat4
-            .createOrthogonal(
-            -params.orthographic.size * params.frame_aspect * params.orthographic.aspect / 2,
-            params.orthographic.size * params.frame_aspect * params.orthographic.aspect / 2,
-            -params.orthographic.size / 2,
-            params.orthographic.size / 2,
-            0,
-            params.orthographic.depth,
-        ),
+            .createOrthogonal(-size_x, size_x, -size_y, size_y, near, far),
     };
 }

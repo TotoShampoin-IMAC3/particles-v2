@@ -14,6 +14,8 @@
 // - Particle particles_init_velocity[]
 // - float u_delta_time
 // - float u_time
+// - float PI
+// - float UINT_MAX_AS_FLOAT
 
 // available functions:
 // - uint hash(uint seed)
@@ -38,6 +40,13 @@ void init(inout Particle particle, inout Particle velocity, uint idx)
     velocity.size = 0.0;
     velocity.angle = 0.0;
     velocity.life = 0.0;
+
+    particle.position.xy = vec2(                            //
+        cos(speed * u_time + float(idx) * spread) * radius, //
+        sin(speed * u_time + float(idx) * spread) * radius  //
+    );
+    particle.position.z = float(idx) * depth;
+    particle.angle = speed * u_time + float(idx) * spread;
 }
 
 void update(inout Particle particle, inout Particle velocity, uint idx)
@@ -47,4 +56,5 @@ void update(inout Particle particle, inout Particle velocity, uint idx)
         sin(speed * u_time + float(idx) * spread) * radius  //
     );
     particle.position.z = float(idx) * depth;
+    particle.angle = speed * u_time + float(idx) * spread;
 }
