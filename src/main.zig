@@ -162,6 +162,12 @@ pub fn main() !void {
             }
             zimgui.End();
 
+            if (zimgui.Begin("Export")) {
+                if (zimgui.Button("Export")) {}
+                zimgui.Text("Not implemented yet");
+            }
+            zimgui.End();
+
             if (zimgui.Begin("Parameters")) {
                 zimgui.SeparatorText("Frame");
                 if (zimgui.InputInt2("Frame Size", &frame_size)) {
