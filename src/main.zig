@@ -139,13 +139,10 @@ pub fn main() !void {
             _ = zimgui.DockSpaceOverViewport();
 
             if (zimgui.Begin("Info")) {
+                const f64_framerate = cast.cast(f64, framerate);
                 zimgui.Text("%.3f ms/frame (%.1f FPS)", 1000.0 / delta, 1.0 / delta);
-                zimgui.Text("now: %.3f s", now);
-                zimgui.Text("last: %.3f s", last);
-                zimgui.Text("last_frame: %.3f s", last_frame);
-                zimgui.Text("delta: %.3f s", now - last);
-                zimgui.Text("frame_delta: %.3f s", now - last_frame);
-                zimgui.Text("interval: %.3f s", interval);
+                zimgui.Text("time: %.3f s", now);
+                zimgui.Text("frame: %.3f s", @floor((now - start) * f64_framerate) / f64_framerate);
             }
             zimgui.End();
 
