@@ -50,3 +50,16 @@ All in compute shaders
       - [ ] Load image
 - [ ] Image sequence saving
   - [ ] Save as gif
+
+## TODO: Images
+
+- [ ] Load image
+- [ ] Save image
+- [ ] Save image sequence
+- [ ] Call ffmpeg to convert image sequence to video
+
+## TODO: Uniforms
+
+- [ ] Design the syntax
+- [ ] Parse the uniform syntax
+- [ ] Code IMGUI for the matching syntax
