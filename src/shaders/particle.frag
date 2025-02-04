@@ -11,6 +11,7 @@ out vec4 f_color;
 
 uniform int u_appearance;
 uniform sampler2D u_texture;
+uniform float u_threshold;
 
 void main()
 {
@@ -20,7 +21,7 @@ void main()
 
     if (u_appearance == APPEARANCE_CIRCLE)
     {
-        if (alpha < 0.5)
+        if (alpha < u_threshold)
             discard;
         f_color = vec4(v_color.rgb, v_color.a * alpha);
     }
@@ -31,6 +32,8 @@ void main()
     else if (u_appearance == APPEARANCE_TEXTURE)
     {
         f_color = texture(u_texture, v_texcoord) * v_color;
+        if (f_color.a < u_threshold)
+            discard;
     }
     else
     {

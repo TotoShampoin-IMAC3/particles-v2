@@ -18,6 +18,7 @@
         .zlm = .{ .path = "modules/zlm" },
         .ZigImGui = .{ .path = "modules/Zig-ImGui" },
         .nfd = .{ .path = "modules/nfd-zig" },
+        .zstbi = .{ .path = "modules/zstbi" },
     },
 
     .paths = .{

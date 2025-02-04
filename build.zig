@@ -66,6 +66,10 @@ pub fn build(b: *std.Build) void {
     const nfd = b.dependency("nfd", .{});
     exe.root_module.addImport("nfd", nfd.module("nfd"));
 
+    const zstbi = b.dependency("zstbi", .{});
+    exe.root_module.addImport("zstbi", zstbi.module("root"));
+    exe.linkLibrary(zstbi.artifact("zstbi"));
+
     b.installArtifact(exe);
 
     const install = b.getInstallStep();

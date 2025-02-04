@@ -13,6 +13,7 @@ const particle = @import("particle.zig");
 const file_states = @import("file_states.zig");
 const framebuffer = @import("managers/framebuffer.zig");
 const cast = @import("utils/cast.zig");
+const image = @import("utils/image.zig");
 
 const Frame = framebuffer.Frame;
 
@@ -35,6 +36,9 @@ pub fn main() !void {
     try file_states.init();
     defer file_states.deinit();
 
+    image.init();
+    defer image.deinit();
+
     file_states.on_new_shader_loaded = changeShader;
 
     const particle_program = particle.render_program;
@@ -53,12 +57,18 @@ pub fn main() !void {
 
     var particle_count = cast.cast(i32, particle.count);
     var particle_appearance = particle.ParticleAppearance.square;
+    var particle_texture = try image.loadTexture("res/particle.png");
+    var particle_transparency_threshold: f32 = 0.5;
+
+    particle_texture = particle_texture;
 
     // ===== CAMERA =====
 
     const u_view = particle_program.uniformLocation("u_view");
     const u_projection = particle_program.uniformLocation("u_projection");
     const u_appearance = particle_program.uniformLocation("u_appearance");
+    const u_texture = particle_program.uniformLocation("u_texture");
+    const u_threshold = particle_program.uniformLocation("u_threshold");
 
     var camera_position = zlm.Vec3.unitZ.scale(-POV);
     var camera_target = zlm.Vec3.zero;
@@ -77,6 +87,8 @@ pub fn main() !void {
     var perspective_zlm = generateProjection(projection_params);
 
     zgl.enable(.depth_test);
+    zgl.enable(.blend);
+    zgl.blendFunc(.src_alpha, .one_minus_src_alpha);
 
     particle.runInit();
 
@@ -118,6 +130,10 @@ pub fn main() !void {
         particle_program.uniformMatrix4(u_view, false, &.{view_matrix.fields});
         particle_program.uniformMatrix4(u_projection, false, &.{perspective_zlm.fields});
         particle_program.uniform1i(u_appearance, cast.cast(i32, particle_appearance));
+        particle_program.uniform1i(u_texture, 0);
+        zgl.activeTexture(.texture_0);
+        zgl.bindTexture(particle_texture, .@"2d");
+        particle_program.uniform1f(u_threshold, particle_transparency_threshold);
 
         Frame.bind(frame);
         Frame.setViewport(frame);
@@ -217,6 +233,7 @@ pub fn main() !void {
                     }
                     zimgui.EndCombo();
                 }
+                if (zimgui.SliderFloat("Transparency threshold", &particle_transparency_threshold, 0.0, 1.0)) {}
                 if (particle.uniforms) |uniforms| {
                     zimgui.SeparatorText("Uniforms");
                     for (uniforms) |*uniform| {
@@ -327,17 +344,6 @@ pub fn handleUniformWithImgui(uniform: *shader.UniformName) !void {
 }
 
 const ProjectionParameters = struct {
-    // perspective: struct {
-    //     fov: f32 = FOV,
-    //     aspect: f32 = 1.0,
-    //     near: f32 = NEAR,
-    //     far: f32 = FAR,
-    // } = .{},
-    // orthographic: struct {
-    //     size: f32 = 2.0,
-    //     aspect: f32 = 1.0,
-    //     depth: f32 = 2.0,
-    // } = .{},
     is_perspective: bool = true,
     perspective_fov: f32 = FOV,
     orthographic_size: f32 = 2.0,

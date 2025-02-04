@@ -16,3 +16,6 @@
 [submodule "modules/nfd-zig"]
 	path = modules/nfd-zig
 	url = https://github.com/fabioarnold/nfd-zig
+[submodule "modules/zstbi"]
+	path = modules/zstbi
+	url = https://github.com/zig-gamedev/zstbi

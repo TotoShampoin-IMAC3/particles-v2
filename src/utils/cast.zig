@@ -11,7 +11,7 @@ pub fn cast(t: type, value: anytype) t {
             .Int => @as(t, @intCast(value)),
             .Float => @as(t, @intFromFloat(value)),
             .Pointer => @as(t, @intFromPtr(value)),
-            .Enum => @as(t, @intFromEnum(value)),
+            .Enum => @as(t, @intCast(@intFromEnum(value))),
             else => @compileError("Unsupported"),
         },
         .Float => switch (@typeInfo(@TypeOf(value))) {
