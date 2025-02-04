@@ -23,46 +23,6 @@ const NEAR = 0.01;
 const FAR = 100.0;
 const POV = 2.0;
 
-fn changeShader(path: [:0]const u8, reload: bool) anyerror!void {
-    try particle.loadProgram(path, reload);
-}
-
-const ProjectionParameters = struct {
-    perspective: struct {
-        fov: f32 = FOV,
-        aspect: f32 = 1.0,
-        near: f32 = NEAR,
-        far: f32 = FAR,
-    } = .{},
-    orthographic: struct {
-        size: f32 = 2.0,
-        aspect: f32 = 1.0,
-        depth: f32 = 2.0,
-    } = .{},
-    is_perspective: bool = true,
-    frame_aspect: f32 = 1.0,
-};
-fn generateProjection(params: ProjectionParameters) zlm.Mat4 {
-    return switch (params.is_perspective) {
-        true => zlm.Mat4
-            .createPerspective(
-            std.math.rad_per_deg * params.perspective.fov,
-            params.perspective.aspect * params.frame_aspect,
-            params.perspective.near,
-            params.perspective.far,
-        ),
-        false => zlm.Mat4
-            .createOrthogonal(
-            -params.orthographic.size * params.frame_aspect * params.orthographic.aspect / 2,
-            params.orthographic.size * params.frame_aspect * params.orthographic.aspect / 2,
-            -params.orthographic.size / 2,
-            params.orthographic.size / 2,
-            0,
-            params.orthographic.depth,
-        ),
-    };
-}
-
 pub fn main() !void {
     // ===== INITIALIZATION =====
 
@@ -92,11 +52,13 @@ pub fn main() !void {
     glfw.swapInterval(cast.cast(c_int, vsync));
 
     var particle_count = cast.cast(i32, particle.count);
+    var particle_appearance = particle.ParticleAppearance.square;
 
     // ===== CAMERA =====
 
-    const particle_view = particle_program.uniformLocation("u_view");
-    const particle_projection = particle_program.uniformLocation("u_projection");
+    const u_view = particle_program.uniformLocation("u_view");
+    const u_projection = particle_program.uniformLocation("u_projection");
+    const u_appearance = particle_program.uniformLocation("u_appearance");
 
     var camera_position = zlm.Vec3.unitZ.scale(-POV);
     var camera_target = zlm.Vec3.zero;
@@ -152,13 +114,14 @@ pub fn main() !void {
         }
 
         zgl.Program.use(particle_program);
-        particle_program.uniformMatrix4(particle_view, false, &.{view_matrix.fields});
-        particle_program.uniformMatrix4(particle_projection, false, &.{perspective_zlm.fields});
+        particle_program.uniformMatrix4(u_view, false, &.{view_matrix.fields});
+        particle_program.uniformMatrix4(u_projection, false, &.{perspective_zlm.fields});
+        particle_program.uniform1i(u_appearance, cast.cast(i32, particle_appearance));
 
         Frame.bind(frame);
         Frame.setViewport(frame);
         zgl.enable(.depth_test);
-        zgl.clearColor(0.0, 0.0, 0.0, 1.0);
+        zgl.clearColor(0.0, 0.0, 0.0, 0.0);
         zgl.clear(.{ .color = true, .depth = true });
         particle.drawParticles();
 
@@ -247,9 +210,17 @@ pub fn main() !void {
                     file_states.reloadShader() catch {};
                     particle.runInit();
                 }
-                if (zimgui.InputInt("Particles count", &particle_count)) {
+                if (zimgui.InputInt("Count", &particle_count)) {
                     particle.setCount(cast.cast(usize, particle_count));
                     particle.runInit();
+                }
+                if (zimgui.BeginCombo("Appearance", particle_appearance.toString().ptr)) {
+                    for (particle.ParticleAppearance.all_values) |value| {
+                        if (zimgui.Selectable_Bool(value.toString().ptr)) {
+                            particle_appearance = value;
+                        }
+                    }
+                    zimgui.EndCombo();
                 }
                 if (particle.uniforms) |uniforms| {
                     zimgui.SeparatorText("Uniforms");
@@ -284,6 +255,10 @@ pub fn main() !void {
 
         last = now;
     }
+}
+
+fn changeShader(path: [:0]const u8, reload: bool) anyerror!void {
+    try particle.loadProgram(path, reload);
 }
 
 pub fn handleUniformWithImgui(uniform: *shader.UniformName) !void {
@@ -354,4 +329,40 @@ pub fn handleUniformWithImgui(uniform: *shader.UniformName) !void {
     if (edit) {
         particle.setUniform(uniform.*);
     }
+}
+
+const ProjectionParameters = struct {
+    perspective: struct {
+        fov: f32 = FOV,
+        aspect: f32 = 1.0,
+        near: f32 = NEAR,
+        far: f32 = FAR,
+    } = .{},
+    orthographic: struct {
+        size: f32 = 2.0,
+        aspect: f32 = 1.0,
+        depth: f32 = 2.0,
+    } = .{},
+    is_perspective: bool = true,
+    frame_aspect: f32 = 1.0,
+};
+fn generateProjection(params: ProjectionParameters) zlm.Mat4 {
+    return switch (params.is_perspective) {
+        true => zlm.Mat4
+            .createPerspective(
+            std.math.rad_per_deg * params.perspective.fov,
+            params.perspective.aspect * params.frame_aspect,
+            params.perspective.near,
+            params.perspective.far,
+        ),
+        false => zlm.Mat4
+            .createOrthogonal(
+            -params.orthographic.size * params.frame_aspect * params.orthographic.aspect / 2,
+            params.orthographic.size * params.frame_aspect * params.orthographic.aspect / 2,
+            -params.orthographic.size / 2,
+            params.orthographic.size / 2,
+            0,
+            params.orthographic.depth,
+        ),
+    };
 }

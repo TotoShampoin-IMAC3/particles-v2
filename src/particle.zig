@@ -10,6 +10,21 @@ const _shapes = @import("managers/shapes.zig");
 
 pub const Particle = _particle.Particle;
 
+pub const ParticleAppearance = enum {
+    square,
+    circle,
+    texture,
+
+    pub fn toString(self: ParticleAppearance) [:0]const u8 {
+        return switch (self) {
+            .square => "square",
+            .circle => "circle",
+            .texture => "texture",
+        };
+    }
+    pub const all_values = [_]ParticleAppearance{ .square, .circle, .texture };
+};
+
 const render_vertex_source = @embedFile("shaders/particle.vert");
 const render_fragment_source = @embedFile("shaders/particle.frag");
 

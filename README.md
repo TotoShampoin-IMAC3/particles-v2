@@ -33,7 +33,7 @@ All in compute shaders
 - [x] Load particle shader at runtime
   - [x] Process shader files, to store everything in a single file
   - [x] Open file dialog to reload shader
-- [ ] Apply rotation transformation
+- [x] Apply rotation transformation
 - [x] GUI
   - [x] frame size and framerate
   - [x] particle count
@@ -42,10 +42,10 @@ All in compute shaders
   - [x] Camera settings
     - [x] Projection type, and parameters
     - [x] Camera position and orientation (?)
-  - [ ] Change particle appearance
-    - [ ] Plain squares
-    - [ ] Circles
-    - [ ] Images
+  - [x] Change particle appearance
+    - [x] Plain squares
+    - [x] Circles
+    - [x] Images
       - [ ] Load image
 - [ ] Image sequence saving
   - [ ] Save as gif
