@@ -23,10 +23,10 @@
 // - uvec4 hashToHash4(uint seed)
 // - vec4 hashNormalized(uint seed)
 
-uniform float spread;
-uniform float depth;
-uniform float radius;
-uniform float speed;
+uniform float spread; //@ui default 0.1, slider 0 1
+uniform float depth;  //@ui default 0.1, slider 0 1
+uniform float radius; //@ui default 1.5, slider 0 2
+uniform float speed;  //@ui default 1, slider 0 10
 
 void apply(inout Particle particle, inout Particle velocity, uint idx)
 {

@@ -22,10 +22,10 @@
 // - uvec4 hashToHash4(uint seed)
 // - vec4 hashNormalized(uint seed)
 
-uniform uint seed;
-uniform vec3 u_gravity;
-uniform vec3 u_color;
-uniform float u_angle;
+uniform uint seed;      //@ui default 0, reset
+uniform vec3 u_gravity; //@ui default 0 -1 0, slider, min -2, max 2
+uniform vec3 u_color;   //@ui default 1 1 1, color
+uniform float u_angle;  //@ui default 0, angle
 
 void init(inout Particle particle, inout Particle velocity, uint idx)
 {

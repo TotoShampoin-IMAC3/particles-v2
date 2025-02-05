@@ -24,6 +24,25 @@ All in compute shaders
 - `init.glsl`
 - `update.glsl`
 
+## Uniform syntax
+
+```glsl
+uniform type name; //@ui property arg1 arg2, property, property arg1 arg2 arg3, ...
+```
+
+### Properties
+
+- default
+  - the default value
+  - as many args as the type requires
+- slider
+  - use slider instead of input
+  - min value then max value
+- color
+  - use color picker
+- angle
+  - use angle picker
+
 ## TODO
 
 - [x] Render quads
@@ -61,6 +80,6 @@ All in compute shaders
 
 ## TODO: Uniforms
 
-- [ ] Design the syntax
+- [x] Design the syntax
 - [ ] Parse the uniform syntax
 - [ ] Code IMGUI for the matching syntax
