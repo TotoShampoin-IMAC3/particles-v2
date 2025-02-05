@@ -38,8 +38,13 @@ pub var init_program: ?zgl.Program = null;
 pub var update_program: ?zgl.Program = null;
 pub var uniforms: ?[]_shader.UniformName = null;
 
-pub var uniform_delta_time: ?u32 = null;
-pub var uniform_time: ?u32 = null;
+pub var init_delta_time: ?u32 = null;
+pub var init_time: ?u32 = null;
+pub var init_particle_count: ?u32 = null;
+
+pub var update_delta_time: ?u32 = null;
+pub var update_time: ?u32 = null;
+pub var update_particle_count: ?u32 = null;
 
 pub var mesh: _mesh.Mesh = undefined;
 
@@ -123,15 +128,23 @@ pub fn loadProgram(path: []const u8, use_same_values: bool) !void {
         }
     }
     defer if (!success) _shader.UniformName.deleteAll(new_uniforms);
-    const new_uniform_delta_time = new_update_program.uniformLocation("u_delta_time");
-    const new_uniform_time = new_update_program.uniformLocation("u_time");
+    const new_init_delta_time = new_init_program.uniformLocation("u_delta_time");
+    const new_init_time = new_init_program.uniformLocation("u_time");
+    const new_init_particle_count = new_init_program.uniformLocation("u_particle_count");
+    const new_update_delta_time = new_update_program.uniformLocation("u_delta_time");
+    const new_update_time = new_update_program.uniformLocation("u_time");
+    const new_update_particle_count = new_update_program.uniformLocation("u_particle_count");
 
     unloadProgram();
     init_program = new_init_program;
     update_program = new_update_program;
     uniforms = new_uniforms;
-    uniform_delta_time = new_uniform_delta_time;
-    uniform_time = new_uniform_time;
+    init_delta_time = new_init_delta_time;
+    init_time = new_init_time;
+    init_particle_count = new_init_particle_count;
+    update_delta_time = new_update_delta_time;
+    update_time = new_update_time;
+    update_particle_count = new_update_particle_count;
     for (uniforms.?) |uniform| {
         setUniform(uniform);
     }
@@ -166,18 +179,26 @@ pub const Data = struct {
     time: f32 = 0.0,
 };
 
-pub fn runInit() void {
+pub fn runInit(data: Data) void {
     if (init_program == null) return;
     zgl.Program.use(init_program.?);
+    if (init_delta_time) |unif|
+        init_program.?.uniform1f(unif, data.delta_time);
+    if (init_time) |unif|
+        init_program.?.uniform1f(unif, data.time);
+    if (init_particle_count) |unif|
+        init_program.?.uniform1i(unif, @intCast(count));
     runProgram();
 }
 pub fn runUpdate(data: Data) void {
     if (update_program == null) return;
     zgl.Program.use(update_program.?);
-    if (uniform_delta_time) |unif|
+    if (update_delta_time) |unif|
         update_program.?.uniform1f(unif, data.delta_time);
-    if (uniform_time) |unif|
+    if (update_time) |unif|
         update_program.?.uniform1f(unif, data.time);
+    if (update_particle_count) |unif|
+        update_program.?.uniform1i(unif, @intCast(count));
     runProgram();
 }
 

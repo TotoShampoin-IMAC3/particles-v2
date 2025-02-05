@@ -12,6 +12,7 @@
 // - Particle particles_init[]
 // - Particle particles_velocity[]
 // - Particle particles_init_velocity[]
+// - int u_particle_count
 // - float u_delta_time
 // - float u_time
 // - float PI
@@ -27,6 +28,17 @@ uniform float depth;
 uniform float radius;
 uniform float speed;
 
+void apply(inout Particle particle, inout Particle velocity, uint idx)
+{
+    int idx2 = u_particle_count - int(idx) - 1;
+    particle.position.xy = vec2(                             //
+        cos(speed * u_time + float(idx2) * spread) * radius, //
+        sin(speed * u_time + float(idx2) * spread) * radius  //
+    );
+    particle.position.z = float(idx2) * depth;
+    particle.angle = speed * u_time + float(idx2) * spread;
+}
+
 void init(inout Particle particle, inout Particle velocity, uint idx)
 {
     particle.position = vec4(vec3(0.0), 1.0);
@@ -41,20 +53,10 @@ void init(inout Particle particle, inout Particle velocity, uint idx)
     velocity.angle = 0.0;
     velocity.life = 0.0;
 
-    particle.position.xy = vec2(                            //
-        cos(speed * u_time + float(idx) * spread) * radius, //
-        sin(speed * u_time + float(idx) * spread) * radius  //
-    );
-    particle.position.z = float(idx) * depth;
-    particle.angle = speed * u_time + float(idx) * spread;
+    apply(particle, velocity, idx);
 }
 
 void update(inout Particle particle, inout Particle velocity, uint idx)
 {
-    particle.position.xy = vec2(                            //
-        cos(speed * u_time + float(idx) * spread) * radius, //
-        sin(speed * u_time + float(idx) * spread) * radius  //
-    );
-    particle.position.z = float(idx) * depth;
-    particle.angle = speed * u_time + float(idx) * spread;
+    apply(particle, velocity, idx);
 }

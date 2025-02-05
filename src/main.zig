@@ -55,6 +55,9 @@ pub fn main() !void {
     var vsync = false;
     glfw.swapInterval(cast.cast(c_int, vsync));
 
+    var export_frame_count: i32 = 1;
+    var export_time_start: f32 = 0.0;
+
     var particle_count = cast.cast(i32, particle.count);
     var particle_appearance = particle.ParticleAppearance.square;
     var particle_texture = try image.loadTexture("res/particle.png");
@@ -90,7 +93,10 @@ pub fn main() !void {
     zgl.enable(.blend);
     zgl.blendFunc(.src_alpha, .one_minus_src_alpha);
 
-    particle.runInit();
+    particle.runInit(.{
+        .delta_time = interval,
+        .time = 0.0,
+    });
 
     // ===== EVENTS =====
 
@@ -101,12 +107,12 @@ pub fn main() !void {
 
     // ===== MAIN LOOP =====
 
-    const start = glfw.getTime();
+    var start = glfw.getTime();
     var last = start;
     var last_frame = start;
     while (glfw.windowShouldClose(init.window) == false) {
         const now = glfw.getTime();
-        // const elapsed = now - start;
+        const elapsed = now - start;
         const delta = now - last;
         const f64_framerate = cast.cast(f64, framerate);
         const frame_time = @floor((now - start) * f64_framerate) / f64_framerate;
@@ -114,7 +120,7 @@ pub fn main() !void {
         if (vsync) {
             particle.runUpdate(.{
                 .delta_time = cast.cast(f32, delta),
-                .time = cast.cast(f32, now - start),
+                .time = cast.cast(f32, elapsed),
             });
         } else {
             if (now - last_frame > interval) {
@@ -157,19 +163,93 @@ pub fn main() !void {
 
             if (zimgui.Begin("Info")) {
                 zimgui.Text("%.3f ms/frame (%.1f FPS)", 1000.0 / delta, 1.0 / delta);
-                zimgui.Text("time: %.3f s", now);
+                zimgui.Text("time: %.3f s", elapsed);
                 zimgui.Text("frame: %.3f s", frame_time);
             }
             zimgui.End();
 
             if (zimgui.Begin("Export")) {
+                zimgui.Text("Size: %dx%d", frame.width, frame.height);
+                zimgui.Text("Framerate: %d", framerate);
+                _ = zimgui.InputInt("Frame count", &export_frame_count);
+                _ = zimgui.InputFloat("Time start", &export_time_start);
+                if (zimgui.Button("Export sequence")) {
+                    const dir = try nfd.saveFileDialog(null, null);
+                    if (dir) |d| exportation: {
+                        defer nfd.freePath(d);
+
+                        zimgui.End();
+                        imgui.endDrawing();
+
+                        std.fs.cwd().access(d, .{}) catch
+                            std.fs.cwd().makeDir(d) catch {
+                            try std.io.getStdErr().writer().print("Failed to create directory {s}\n", .{d});
+                            break :exportation;
+                        };
+
+                        particle.runInit(.{
+                            .delta_time = interval,
+                            .time = 0.0,
+                        });
+
+                        for (0..@intCast(export_frame_count)) |idx| {
+                            const time = export_time_start + cast.cast(f32, idx) / cast.cast(f32, framerate);
+                            std.debug.print("Exporting frame {d} at time {d}\n", .{ idx, time });
+                            particle.runUpdate(.{
+                                .delta_time = interval,
+                                .time = time,
+                            });
+
+                            Frame.bind(frame);
+                            Frame.setViewport(frame);
+                            zgl.clear(.{ .color = true, .depth = true });
+                            particle.drawParticles();
+                            Frame.bind(null);
+
+                            zgl.clear(.{ .color = true });
+                            imgui.beginDrawing();
+                            if (zimgui.Begin("Exporting...")) {
+                                zimgui.Text("Frame %d", idx);
+                                zimgui.Text("Time %f", time);
+                                zimgui.Image(
+                                    cast.enumCast(zimgui.TextureID, frame.texture),
+                                    zimgui.Vec2.init(
+                                        cast.cast(f32, frame.width),
+                                        cast.cast(f32, frame.height),
+                                    ),
+                                );
+                            }
+                            zimgui.End();
+                            imgui.endDrawing();
+
+                            glfw.pollEvents();
+                            glfw.swapBuffers(init.window);
+
+                            const filename = try std.fmt.allocPrintZ(alloc.allocator, "{s}/frame_{d:0>3}.png", .{ d, idx });
+                            defer alloc.allocator.free(filename);
+
+                            image.saveTexture(frame.texture, filename, .{
+                                .width = frame.width,
+                                .height = frame.height,
+                                .pixel_format = .rgba,
+                                .pixel_type = .unsigned_byte,
+                            }) catch |err| {
+                                try std.io.getStdErr().writer().print("Failed to save {s}\nError: {!}\n", .{ filename, err });
+                                break;
+                            };
+                        }
+                        continue;
+                    }
+                }
                 if (zimgui.Button("Export frame")) {
                     image.exportTexture(frame.texture, .{
                         .width = frame.width,
                         .height = frame.height,
                         .pixel_format = .rgba,
                         .pixel_type = .unsigned_byte,
-                    }) catch {};
+                    }) catch |err| {
+                        try std.io.getStdErr().writer().print("Failed to export\nError: {!}\n", .{err});
+                    };
                 }
             }
             zimgui.End();
@@ -225,17 +305,29 @@ pub fn main() !void {
                     if (file) |f| {
                         defer nfd.freePath(f);
                         file_states.loadShader(f) catch {};
-                        particle.runInit();
+                        start = glfw.getTime();
+                        particle.runInit(.{
+                            .delta_time = interval,
+                            .time = 0.0,
+                        });
                     }
                 }
                 zimgui.SameLine();
                 if (zimgui.Button("Reload")) {
                     file_states.reloadShader() catch {};
-                    particle.runInit();
+                    start = glfw.getTime();
+                    particle.runInit(.{
+                        .delta_time = interval,
+                        .time = 0.0,
+                    });
                 }
                 if (zimgui.InputInt("Count", &particle_count)) {
                     particle.setCount(cast.cast(usize, particle_count));
-                    particle.runInit();
+                    start = glfw.getTime();
+                    particle.runInit(.{
+                        .delta_time = interval,
+                        .time = 0.0,
+                    });
                 }
                 if (zimgui.BeginCombo("Appearance", particle_appearance.toString().ptr)) {
                     for (particle.ParticleAppearance.all_values) |value| {

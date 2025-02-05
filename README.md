@@ -48,15 +48,15 @@ All in compute shaders
     - [x] Circles
     - [x] Images
       - [x] Load image
-- [ ] Image sequence saving
-  - [x] Save one frame as png/jpg
+- [x] Image sequence saving
+  - [x] Save one frame as png
   - [ ] Save as gif
 
 ## TODO: Images
 
 - [x] Load image
 - [x] Save image
-- [ ] Save image sequence
+- [x] Save image sequence
 - [ ] Call ffmpeg to convert image sequence to video
 
 ## TODO: Uniforms

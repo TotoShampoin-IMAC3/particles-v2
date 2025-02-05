@@ -119,7 +119,7 @@ pub fn saveTexture(texture: zgl.Texture, path: [:0]const u8, data: TextureData) 
     );
 }
 pub fn exportTexture(texture: zgl.Texture, data: TextureData) !void {
-    const file = try nfd.saveFileDialog("png,jpg,jpeg", null);
+    const file = try nfd.saveFileDialog("png", null);
     if (file) |f| {
         defer nfd.freePath(f);
         try saveTexture(texture, f, data);
