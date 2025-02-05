@@ -163,8 +163,14 @@ pub fn main() !void {
             zimgui.End();
 
             if (zimgui.Begin("Export")) {
-                if (zimgui.Button("Export")) {}
-                zimgui.Text("Not implemented yet");
+                if (zimgui.Button("Export frame")) {
+                    image.exportTexture(frame.texture, .{
+                        .width = frame.width,
+                        .height = frame.height,
+                        .pixel_format = .rgba,
+                        .pixel_type = .unsigned_byte,
+                    }) catch {};
+                }
             }
             zimgui.End();
 

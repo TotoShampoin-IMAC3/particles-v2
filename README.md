@@ -47,14 +47,15 @@ All in compute shaders
     - [x] Plain squares
     - [x] Circles
     - [x] Images
-      - [ ] Load image
+      - [x] Load image
 - [ ] Image sequence saving
+  - [x] Save one frame as png/jpg
   - [ ] Save as gif
 
 ## TODO: Images
 
-- [ ] Load image
-- [ ] Save image
+- [x] Load image
+- [x] Save image
 - [ ] Save image sequence
 - [ ] Call ffmpeg to convert image sequence to video
 
@@ -63,5 +64,3 @@ All in compute shaders
 - [ ] Design the syntax
 - [ ] Parse the uniform syntax
 - [ ] Code IMGUI for the matching syntax
-
-<!-- https://github.com/allyourcodebase/ffmpeg -->

@@ -1,7 +1,8 @@
-const alloc = @import("../managers/allocator.zig");
+const std = @import("std");
 const zstbi = @import("zstbi");
 const zgl = @import("zgl");
 const nfd = @import("nfd");
+const alloc = @import("../managers/allocator.zig");
 
 pub fn init() void {
     zstbi.init(alloc.allocator);
@@ -70,4 +71,57 @@ pub fn replaceTexture(texture: *zgl.Texture) !void {
     const new_texture = try fetchTexture();
     zgl.Texture.delete(texture.*);
     texture.* = new_texture;
+}
+
+pub const TextureData = struct {
+    width: usize,
+    height: usize,
+    pixel_format: zgl.PixelFormat,
+    pixel_type: zgl.PixelType,
+    jpeg_quality: u32 = 90,
+};
+pub fn saveTexture(texture: zgl.Texture, path: [:0]const u8, data: TextureData) !void {
+    zgl.bindTexture(texture, .@"2d");
+
+    const channels = switch (data.pixel_format) {
+        .red => @as(u32, 1),
+        .rg => @as(u32, 2),
+        .rgb => @as(u32, 3),
+        .rgba => @as(u32, 4),
+        else => return error.UnsupportedImageFormat,
+    };
+    const bytes_per_component = switch (data.pixel_type) {
+        .unsigned_byte => @as(u32, 1),
+        .unsigned_short => @as(u32, 2),
+        .unsigned_int => @as(u32, 4),
+        else => return error.UnsupportedImageFormat,
+    };
+
+    var image = try zstbi.Image.createEmpty(
+        @intCast(data.width),
+        @intCast(data.height),
+        channels,
+        .{
+            .bytes_per_component = bytes_per_component,
+        },
+    );
+    defer image.deinit();
+    zgl.getTexImage(.@"2d", 0, data.pixel_format, data.pixel_type, image.data.ptr);
+
+    const is_png = std.mem.endsWith(u8, path, "png");
+    const is_jpg = std.mem.endsWith(u8, path, "jpg") or std.mem.endsWith(u8, path, "jpeg");
+    try zstbi.Image.writeToFile(
+        image,
+        path,
+        if (is_png) .png else if (is_jpg) .{
+            .jpg = .{ .quality = data.jpeg_quality },
+        } else return error.UnsupportedImageFormat,
+    );
+}
+pub fn exportTexture(texture: zgl.Texture, data: TextureData) !void {
+    const file = try nfd.saveFileDialog("png,jpg,jpeg", null);
+    if (file) |f| {
+        defer nfd.freePath(f);
+        try saveTexture(texture, f, data);
+    }
 }

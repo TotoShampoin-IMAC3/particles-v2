@@ -37,7 +37,7 @@ pub const Frame = struct {
         self.height = height;
 
         zgl.Texture.bind(self.texture, .@"2d");
-        zgl.textureImage2D(.@"2d", 0, .rgba, width, height, .rgba, .float, null);
+        zgl.textureImage2D(.@"2d", 0, .rgba, width, height, .rgba, .unsigned_byte, null);
         zgl.Texture.parameter(self.texture, .min_filter, .linear);
         zgl.Texture.parameter(self.texture, .mag_filter, .linear);
         zgl.Texture.parameter(self.texture, .wrap_s, .clamp_to_edge);
