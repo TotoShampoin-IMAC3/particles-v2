@@ -320,6 +320,7 @@ pub fn main() !void {
                     image.replaceTexture(&particle_texture) catch |err| {
                         std.debug.print("{!}\n", .{err});
                     };
+                    particle_appearance = .texture;
                 }
                 zimgui.SameLine();
                 if (zimgui.Button("Reload")) {
