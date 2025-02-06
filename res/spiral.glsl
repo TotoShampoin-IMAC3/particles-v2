@@ -26,7 +26,7 @@
 uniform float spread; //@ui default 0.1, slider 0 1
 uniform float depth;  //@ui default 0.1, slider 0 1
 uniform float radius; //@ui default 1.5, slider 0 2
-uniform float speed;  //@ui default 1, slider 0 10
+uniform float speed;  //@ui default 1
 uniform float size;   //@ui default 0.33333, slider 0 1
 
 void apply(inout Particle particle, inout Particle velocity, uint idx)

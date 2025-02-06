@@ -1,5 +1,7 @@
 #version 430 core
 
+precision highp float;
+
 struct Particle
 {
     vec4 position;

@@ -17,13 +17,12 @@ void main()
 {
     float dist = length(v_texcoord - 0.5);
 
-    float alpha = smoothstep(0.52, 0.48, dist);
-
     if (u_appearance == APPEARANCE_CIRCLE)
     {
-        if (alpha < u_threshold)
+        float alpha = dist;
+        if (alpha >= u_threshold)
             discard;
-        f_color = vec4(v_color.rgb, v_color.a * alpha);
+        f_color = v_color;
     }
     else if (u_appearance == APPEARANCE_SQUARE)
     {
