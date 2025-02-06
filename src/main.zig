@@ -305,7 +305,9 @@ pub fn main() !void {
                     const file = try nfd.openFileDialog("glsl", null);
                     if (file) |f| {
                         defer nfd.freePath(f);
-                        file_states.loadShader(f) catch {};
+                        file_states.loadShader(f) catch |err| {
+                            std.debug.print("{!}\n", .{err});
+                        };
                         start = glfw.getTime();
                         particle.runInit(.{
                             .delta_time = interval,
@@ -314,8 +316,16 @@ pub fn main() !void {
                     }
                 }
                 zimgui.SameLine();
+                if (zimgui.Button("Load texture")) {
+                    image.replaceTexture(&particle_texture) catch |err| {
+                        std.debug.print("{!}\n", .{err});
+                    };
+                }
+                zimgui.SameLine();
                 if (zimgui.Button("Reload")) {
-                    file_states.reloadShader() catch {};
+                    file_states.reloadShader() catch |err| {
+                        std.debug.print("{!}\n", .{err});
+                    };
                     start = glfw.getTime();
                     particle.runInit(.{
                         .delta_time = interval,
@@ -342,7 +352,13 @@ pub fn main() !void {
                 if (particle.uniforms) |uniforms| {
                     zimgui.SeparatorText("Uniforms");
                     for (uniforms) |*uniform| {
-                        try handleUniformWithImgui(uniform);
+                        if (try handleUniformWithImgui(uniform)) {
+                            start = glfw.getTime();
+                            particle.runInit(.{
+                                .delta_time = interval,
+                                .time = 0.0,
+                            });
+                        }
                     }
                 }
             }
@@ -378,7 +394,7 @@ fn changeShader(path: [:0]const u8, reload: bool) anyerror!void {
     try particle.loadProgram(path, reload);
 }
 
-pub fn handleUniformWithImgui(uniform: *_uniform.UniformName) !void {
+pub fn handleUniformWithImgui(uniform: *_uniform.UniformName) !bool {
     const name = uniform.name;
     const name_s = try std.mem
         .joinZ(alloc.allocator, "", &.{name});
@@ -450,6 +466,7 @@ pub fn handleUniformWithImgui(uniform: *_uniform.UniformName) !void {
     if (edit) {
         particle.setUniform(uniform.*);
     }
+    return edit and uniform.ui.reset_on_change;
 }
 
 const ProjectionParameters = struct {
