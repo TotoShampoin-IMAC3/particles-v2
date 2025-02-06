@@ -143,8 +143,6 @@ pub const UniformUI = struct {
             .reset_on_change = false,
         };
 
-        std.debug.print("{s}\n", .{line});
-
         if (!std.mem.startsWith(u8, line, "//@ui")) return value;
         var parameters = std.mem.tokenizeSequence(u8, std.mem.trim(u8, line[5..], " "), ",");
 
