@@ -7,6 +7,7 @@ const _shader = @import("managers/shader.zig");
 const _particle = @import("managers/particle.zig");
 const _vertex = @import("managers/vertex.zig");
 const _shapes = @import("managers/shapes.zig");
+const _uniform = @import("managers/uniform.zig");
 
 pub const Particle = _particle.Particle;
 
@@ -36,7 +37,7 @@ pub var render_program: zgl.Program = undefined;
 
 pub var init_program: ?zgl.Program = null;
 pub var update_program: ?zgl.Program = null;
-pub var uniforms: ?[]_shader.UniformName = null;
+pub var uniforms: ?[]_uniform.UniformName = null;
 
 pub var init_delta_time: ?u32 = null;
 pub var init_time: ?u32 = null;
@@ -127,7 +128,7 @@ pub fn loadProgram(path: []const u8, use_same_values: bool) !void {
             }
         }
     }
-    defer if (!success) _shader.UniformName.deleteAll(new_uniforms);
+    defer if (!success) _uniform.UniformName.deleteAll(new_uniforms);
     const new_init_delta_time = new_init_program.uniformLocation("u_delta_time");
     const new_init_time = new_init_program.uniformLocation("u_time");
     const new_init_particle_count = new_init_program.uniformLocation("u_particle_count");
@@ -160,7 +161,7 @@ pub fn unloadProgram() void {
         update_program = null;
     }
     if (uniforms != null) {
-        _shader.UniformName.deleteAll(uniforms.?);
+        _uniform.UniformName.deleteAll(uniforms.?);
         uniforms = null;
     }
 }
@@ -207,7 +208,7 @@ pub fn drawParticles() void {
     mesh.drawInstanced(count);
 }
 
-pub fn setUniform(uniform: _shader.UniformName) void {
+pub fn setUniform(uniform: _uniform.UniformName) void {
     if (init_program == null or update_program == null) return;
     switch (uniform.type) {
         .int => {

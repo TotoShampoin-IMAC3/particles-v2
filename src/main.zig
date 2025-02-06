@@ -5,13 +5,14 @@ const zlm = @import("zlm");
 const zimgui = @import("Zig-ImGui");
 const nfd = @import("nfd");
 
-const alloc = @import("managers/allocator.zig");
-const shader = @import("managers/shader.zig");
 const init = @import("init.zig");
 const imgui = @import("imgui.zig");
 const particle = @import("particle.zig");
 const file_states = @import("file_states.zig");
+const alloc = @import("managers/allocator.zig");
+const shader = @import("managers/shader.zig");
 const framebuffer = @import("managers/framebuffer.zig");
+const _uniform = @import("managers/uniform.zig");
 const cast = @import("utils/cast.zig");
 const image = @import("utils/image.zig");
 
@@ -377,70 +378,74 @@ fn changeShader(path: [:0]const u8, reload: bool) anyerror!void {
     try particle.loadProgram(path, reload);
 }
 
-pub fn handleUniformWithImgui(uniform: *shader.UniformName) !void {
+pub fn handleUniformWithImgui(uniform: *_uniform.UniformName) !void {
     const name = uniform.name;
     const name_s = try std.mem
-        .concatWithSentinel(alloc.allocator, u8, &.{name}, 0);
+        .joinZ(alloc.allocator, "", &.{name});
     defer alloc.allocator.free(name_s);
+
+    const funcs = uniform.ui.imguiFunctions();
+
     const edit = switch (uniform.type) {
-        .int => zimgui.InputInt(name_s, &uniform.value.int),
-        .uint => zimgui.InputInt(name_s, @ptrCast(&uniform.value.uint)),
-        .float => zimgui.InputFloat(name_s, &uniform.value.float),
-        .vec2 => zimgui.InputFloat2(name_s, &uniform.value.vec2),
-        .vec3 => zimgui.InputFloat3(name_s, &uniform.value.vec3),
-        .vec4 => zimgui.InputFloat4(name_s, &uniform.value.vec4),
-        .ivec2 => zimgui.InputInt2(name_s, &uniform.value.ivec2),
-        .ivec3 => zimgui.InputInt3(name_s, &uniform.value.ivec3),
-        .ivec4 => zimgui.InputInt4(name_s, &uniform.value.ivec4),
+        .int => funcs.InputInt(name_s, &uniform.value.int, uniform.ui.data),
+        .uint => funcs.InputInt(name_s, @ptrCast(&uniform.value.uint), uniform.ui.data),
+        .float => funcs.InputFloat(name_s, &uniform.value.float, uniform.ui.data),
+        .bool => funcs.Checkbox(name_s, &uniform.value.bool, uniform.ui.data),
+        .vec2 => funcs.InputFloat2(name_s, &uniform.value.vec2, uniform.ui.data),
+        .vec3 => funcs.InputFloat3(name_s, &uniform.value.vec3, uniform.ui.data),
+        .vec4 => funcs.InputFloat4(name_s, &uniform.value.vec4, uniform.ui.data),
+        .ivec2 => funcs.InputInt2(name_s, &uniform.value.ivec2, uniform.ui.data),
+        .ivec3 => funcs.InputInt3(name_s, &uniform.value.ivec3, uniform.ui.data),
+        .ivec4 => funcs.InputInt4(name_s, &uniform.value.ivec4, uniform.ui.data),
         .mat2 => bl: {
             const name_0 = std.mem
-                .concatWithSentinel(alloc.allocator, u8, &.{ name, "0" }, 0) catch break :bl false;
+                .joinZ(alloc.allocator, " ", &.{ name, "0" }) catch break :bl false;
             defer alloc.allocator.free(name_0);
             const name_1 = std.mem
-                .concatWithSentinel(alloc.allocator, u8, &.{ name, "1" }, 0) catch break :bl false;
+                .joinZ(alloc.allocator, " ", &.{ name, "1" }) catch break :bl false;
             defer alloc.allocator.free(name_1);
             var ret = false;
-            ret = zimgui.InputFloat2(name_0, &uniform.value.mat2[0]) or ret;
-            ret = zimgui.InputFloat2(name_1, &uniform.value.mat2[1]) or ret;
+            ret = funcs.InputFloat2(name_0, &uniform.value.mat2[0], uniform.ui.data) or ret;
+            ret = funcs.InputFloat2(name_1, &uniform.value.mat2[1], uniform.ui.data) or ret;
             break :bl ret;
         },
         .mat3 => bl: {
             const name_0 = std.mem
-                .concatWithSentinel(alloc.allocator, u8, &.{ name, "0" }, 0) catch break :bl false;
+                .joinZ(alloc.allocator, " ", &.{ name, "0" }) catch break :bl false;
             defer alloc.allocator.free(name_0);
             const name_1 = std.mem
-                .concatWithSentinel(alloc.allocator, u8, &.{ name, "1" }, 0) catch break :bl false;
+                .joinZ(alloc.allocator, " ", &.{ name, "1" }) catch break :bl false;
             defer alloc.allocator.free(name_1);
             const name_2 = std.mem
-                .concatWithSentinel(alloc.allocator, u8, &.{ name, "2" }, 0) catch break :bl false;
+                .joinZ(alloc.allocator, " ", &.{ name, "2" }) catch break :bl false;
             defer alloc.allocator.free(name_2);
             var ret = false;
-            ret = zimgui.InputFloat3(name_0, &uniform.value.mat3[0]) or ret;
-            ret = zimgui.InputFloat3(name_1, &uniform.value.mat3[1]) or ret;
-            ret = zimgui.InputFloat3(name_2, &uniform.value.mat3[2]) or ret;
+            ret = funcs.InputFloat3(name_0, &uniform.value.mat3[0], uniform.ui.data) or ret;
+            ret = funcs.InputFloat3(name_1, &uniform.value.mat3[1], uniform.ui.data) or ret;
+            ret = funcs.InputFloat3(name_2, &uniform.value.mat3[2], uniform.ui.data) or ret;
             break :bl ret;
         },
         .mat4 => bl: {
             const name_0 = std.mem
-                .concatWithSentinel(alloc.allocator, u8, &.{ name, "0" }, 0) catch break :bl false;
+                .joinZ(alloc.allocator, " ", &.{ name, "0" }) catch break :bl false;
             defer alloc.allocator.free(name_0);
             const name_1 = std.mem
-                .concatWithSentinel(alloc.allocator, u8, &.{ name, "1" }, 0) catch break :bl false;
+                .joinZ(alloc.allocator, " ", &.{ name, "1" }) catch break :bl false;
             defer alloc.allocator.free(name_1);
             const name_2 = std.mem
-                .concatWithSentinel(alloc.allocator, u8, &.{ name, "2" }, 0) catch break :bl false;
+                .joinZ(alloc.allocator, " ", &.{ name, "2" }) catch break :bl false;
             defer alloc.allocator.free(name_2);
             const name_3 = std.mem
-                .concatWithSentinel(alloc.allocator, u8, &.{ name, "3" }, 0) catch break :bl false;
+                .joinZ(alloc.allocator, " ", &.{ name, "3" }) catch break :bl false;
             defer alloc.allocator.free(name_3);
             var ret = false;
-            ret = zimgui.InputFloat4(name_0, &uniform.value.mat4[0]) or ret;
-            ret = zimgui.InputFloat4(name_1, &uniform.value.mat4[1]) or ret;
-            ret = zimgui.InputFloat4(name_2, &uniform.value.mat4[2]) or ret;
-            ret = zimgui.InputFloat4(name_3, &uniform.value.mat4[3]) or ret;
+            ret = funcs.InputFloat4(name_0, &uniform.value.mat4[0], uniform.ui.data) or ret;
+            ret = funcs.InputFloat4(name_1, &uniform.value.mat4[1], uniform.ui.data) or ret;
+            ret = funcs.InputFloat4(name_2, &uniform.value.mat4[2], uniform.ui.data) or ret;
+            ret = funcs.InputFloat4(name_3, &uniform.value.mat4[3], uniform.ui.data) or ret;
             break :bl ret;
         },
-        else => unreachable,
+        // else => unreachable,
     };
     if (edit) {
         particle.setUniform(uniform.*);

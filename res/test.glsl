@@ -23,7 +23,7 @@
 // - vec4 hashNormalized(uint seed)
 
 uniform uint seed;      //@ui default 0, reset
-uniform vec3 u_gravity; //@ui default 0 -1 0, slider, min -2, max 2
+uniform vec3 u_gravity; //@ui default 0 1 0, slider -2 2
 uniform vec3 u_color;   //@ui default 1 1 1, color
 uniform float u_angle;  //@ui default 0, angle
 
@@ -32,7 +32,7 @@ void init(inout Particle particle, inout Particle velocity, uint idx)
     particle.position = vec4(hashNormalized(hash(seed) + idx).xyz * 2 - 1, 1.0);
     particle.color = vec4(u_color, 1.0);
     particle.size = 0.25;
-    particle.angle = u_angle * PI / 180.0;
+    particle.angle = u_angle;
     particle.life = 1.0;
 
     velocity.position = vec4(0.0, 0.0, 0.0, 0.0);
@@ -45,7 +45,7 @@ void init(inout Particle particle, inout Particle velocity, uint idx)
 void update(inout Particle particle, inout Particle velocity, uint idx)
 {
     particle.color = vec4(u_color, 1.0);
-    particle.angle = u_angle * PI / 180.0;
+    particle.angle = u_angle;
     velocity.position.xyz += u_gravity * u_delta_time;
 
     if (particle.position.x > 1)

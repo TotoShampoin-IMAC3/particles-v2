@@ -27,6 +27,7 @@ uniform float spread; //@ui default 0.1, slider 0 1
 uniform float depth;  //@ui default 0.1, slider 0 1
 uniform float radius; //@ui default 1.5, slider 0 2
 uniform float speed;  //@ui default 1, slider 0 10
+uniform float size;   //@ui default 0.33333, slider 0 1
 
 void apply(inout Particle particle, inout Particle velocity, uint idx)
 {
@@ -37,6 +38,8 @@ void apply(inout Particle particle, inout Particle velocity, uint idx)
     );
     particle.position.z = float(idx2) * depth;
     particle.angle = speed * u_time + float(idx2) * spread;
+
+    particle.size = size;
 }
 
 void init(inout Particle particle, inout Particle velocity, uint idx)
