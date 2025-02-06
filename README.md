@@ -58,7 +58,7 @@ uniform type name; //@ui property arg1 arg2, property, property arg1 arg2 arg3, 
   - [x] particle count
   - [x] particle parameters
     - [x] Detect uniforms and make them editable
-    - [ ] Give properties to uniforms
+    - [x] Give properties to uniforms
   - [x] Camera settings
     - [x] Projection type, and parameters
     - [x] Camera position and orientation (?)
@@ -81,5 +81,5 @@ uniform type name; //@ui property arg1 arg2, property, property arg1 arg2 arg3, 
 ## TODO: Uniforms
 
 - [x] Design the syntax
-- [ ] Parse the uniform syntax
-- [ ] Code IMGUI for the matching syntax
+- [x] Parse the uniform syntax
+- [x] Code IMGUI for the matching syntax
