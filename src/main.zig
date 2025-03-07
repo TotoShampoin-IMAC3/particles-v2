@@ -201,8 +201,19 @@ pub fn main() !void {
                                 .time = time,
                             });
 
+                            zgl.Program.use(particle_program);
+                            particle_program.uniformMatrix4(u_view, false, &.{view_matrix.fields});
+                            particle_program.uniformMatrix4(u_projection, false, &.{perspective_zlm.fields});
+                            particle_program.uniform1i(u_appearance, cast.cast(i32, particle_appearance));
+                            particle_program.uniform1i(u_texture, 0);
+                            zgl.activeTexture(.texture_0);
+                            zgl.bindTexture(particle_texture, .@"2d");
+                            particle_program.uniform1f(u_threshold, particle_transparency_threshold);
+
                             Frame.bind(frame);
                             Frame.setViewport(frame);
+                            zgl.enable(.depth_test);
+                            zgl.clearColor(0.0, 0.0, 0.0, 0.0);
                             zgl.clear(.{ .color = true, .depth = true });
                             particle.drawParticles();
                             Frame.bind(null);
